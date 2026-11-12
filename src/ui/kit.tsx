@@ -120,7 +120,7 @@ export function Screen(props: { title: string; subtitle?: ReactNode; right?: Rea
         <div className="navbar-inner">
           <div className="navbar-left">
             {nav.depth > 0 && (
-              <button className="bar-button" onClick={nav.pop} aria-label="Atrás">
+              <button className="bar-button" onClick={nav.pop} aria-label={`Volver a ${props.back ?? "Atrás"}`}>
                 {Icon.chevronLeft()} <span>{props.back ?? 'Atrás'}</span>
               </button>
             )}

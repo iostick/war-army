@@ -32,6 +32,7 @@ export function DataProvider(props: { children: ReactNode; onUpdated?: (msg: str
     setSyncing(true)
     setError(undefined)
     try {
+      const hadData = Boolean(await getMeta())
       const r = await bsdata.sync(setProgress)
       const m = await getMeta()
       setMeta(m)
@@ -39,7 +40,7 @@ export function DataProvider(props: { children: ReactNode; onUpdated?: (msg: str
         clearIndexCache()
         const msg = `Datos actualizados: ${r.changedFiles.length} archivo${r.changedFiles.length === 1 ? '' : 's'}`
         setLastResult(msg)
-        onUpdated?.(msg)
+        if (hadData) onUpdated?.(msg)
       } else setLastResult('Ya tienes la última versión')
     } catch (e) {
       setError((e as Error).message)

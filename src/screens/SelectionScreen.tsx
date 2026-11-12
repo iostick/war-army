@@ -123,7 +123,7 @@ export function SelectionScreen(props: { rosterUid: string; selUid: string; back
 
       {sheet && <DatasheetView sheet={sheet} />}
 
-      {isRoot && (
+      {isRoot && inst.node.type !== 'upgrade' && (
         <Section>
           <Row title="Duplicar unidad" className="action" icon={Icon.copy(17)} onClick={() => update((r) => duplicateSelection(r, inst.sel.uid))} />
           <Row
@@ -220,7 +220,7 @@ function DatasheetView({ sheet }: { sheet: ReturnType<typeof datasheet> }) {
       {unitProfiles.map((p) => (
         <Section key={p.name} header={p.name}>
           <div className="stats">
-            {p.characteristics.map((c) => (
+            {p.characteristics.filter((c) => c.value.trim() !== '').map((c) => (
               <div className="stat" key={c.name}>
                 <b>{c.value}</b>
                 <span>{c.name}</span>
@@ -275,8 +275,8 @@ function DatasheetView({ sheet }: { sheet: ReturnType<typeof datasheet> }) {
       )}
       {abilities.length > 0 && (
         <Section header="Habilidades">
-          {abilities.map((a) => (
-            <div className="ability" key={a.name}>
+          {abilities.map((a, i) => (
+            <div className="ability" key={a.name + i}>
               <b>{a.name}</b>
               {a.description}
             </div>
