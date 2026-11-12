@@ -125,8 +125,27 @@ export interface Game {
   attacker?: 0 | 1
   /** VP per battle round: [my primary, my secondary, their primary, their secondary] */
   rounds?: [number, number, number, number][]
-  /** Secondary missions in play for each player */
+  /** Secondary missions in play for each player (active cards) */
   secondaries?: [string[], string[]]
+  /** Tactical (draw from the deck) or Fixed (two cards all game), per player */
+  secMode?: [SecMode | null, SecMode | null]
+  /** Remaining Tactical deck per player, top card first */
+  deck?: [string[], string[]]
+  /** Tactical cards discarded per player */
+  discarded?: [string[], string[]]
+  /** Secondary VP scored per card: name, VP and battle round */
+  scored?: [ScoredCard[], ScoredCard[]]
+  /** The once-per-battle 1CP redraw has been used */
+  newOrders?: [boolean, boolean]
+  /** Last battle round in which each player gained the 1CP from discarding a secondary */
+  cpBonusRound?: [number, number]
+}
+
+export type SecMode = 'tactical' | 'fixed'
+export interface ScoredCard {
+  name: string
+  vp: number
+  round: number
 }
 
 export const rosters = table<Roster>('rosters')

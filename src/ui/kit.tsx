@@ -55,6 +55,13 @@ export const Icon = {
       <circle cx="12" cy="12" r="1.2" fill="currentColor" />
     </svg>
   ),
+  info: (s = 18) => (
+    <svg width={s} height={s} viewBox="0 0 24 24" {...P} strokeWidth={1.8}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 11v6" />
+      <circle cx="12" cy="7.6" r="1.1" fill="currentColor" stroke="none" />
+    </svg>
+  ),
   trophy: (s = 26) => (
     <svg width={s} height={s} viewBox="0 0 24 24" {...P} strokeWidth={1.8}>
       <path d="M7.5 4h9v5a4.5 4.5 0 0 1-9 0z" />
