@@ -1885,3 +1885,151 @@ button.row:active {
   cursor: pointer;
   flex: none;
 }
+
+/* Elegir facción */
+.faction-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.faction-tile {
+  position: relative;
+  min-height: 64px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  text-align: left;
+  display: flex;
+  align-items: flex-end;
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.05;
+  text-transform: uppercase;
+  background: linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 35%, #05060a));
+  opacity: 0.82;
+  border: 2px solid transparent;
+}
+
+.faction-tile.on {
+  opacity: 1;
+  border-color: #fff;
+  box-shadow: 0 0 0 2px var(--accent), 0 8px 22px color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
+.faction-check {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: #fff;
+  color: var(--accent);
+}
+
+.select-input {
+  width: 100%;
+  padding: 12px 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+/* Que iOS no agrande el texto por su cuenta */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+.stat b {
+  font-size: 20px;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.stat span {
+  font-size: 10.5px;
+}
+
+@media (max-width: 420px) {
+  .stats {
+    grid-template-columns: repeat(auto-fit, minmax(40px, 1fr));
+    gap: 5px;
+    padding: 10px;
+  }
+  .stat {
+    padding: 5px 2px;
+  }
+  .stat b {
+    font-size: 18px;
+  }
+  .weapons {
+    font-size: 13px;
+  }
+}
+
+/* Reglamento (Wahapedia) */
+.rulebook {
+  white-space: normal;
+}
+.rulebook p {
+  margin: 0 0 8px;
+}
+.rulebook ul,
+.rulebook ol {
+  margin: 4px 0 8px;
+  padding-left: 20px;
+}
+.rulebook b,
+.rulebook strong {
+  display: inline;
+  font-family: inherit;
+  font-size: inherit;
+  color: var(--label);
+}
+.rulebook img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 10px;
+  display: block;
+  margin: 8px auto;
+}
+.rulebook table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 13px;
+  margin: 8px 0;
+  display: block;
+  overflow-x: auto;
+}
+.rulebook td,
+.rulebook th {
+  border: 1px solid var(--border);
+  padding: 4px 6px;
+  vertical-align: top;
+}
+.rulebook.focus {
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.sheet-header .navbar-left .bar-button {
+  width: auto;
+  height: 36px;
+  padding: 0 10px;
+  border-radius: 18px;
+  background: transparent;
+  color: var(--label-2);
+}
+
+.segmented button {
+  white-space: nowrap;
+  font-size: 12px;
+  padding: 0 6px;
+}

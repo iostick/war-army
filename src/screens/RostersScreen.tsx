@@ -6,7 +6,7 @@ import { rosterStore } from '../data/rosterStore'
 import { summarize } from '../data/session'
 import { createRoster } from '../engine/ops'
 import type { Roster } from '../engine/roster'
-import { Icon, Row, Screen, Section, Segmented, Sheet, Spinner } from '../ui/kit'
+import { Icon, Screen, Section, Segmented, Sheet, Spinner } from '../ui/kit'
 import { useNav } from '../ui/nav'
 import { factionColor, shortFaction } from '../ui/faction'
 import { RosterScreen } from './RosterScreen'
@@ -98,6 +98,7 @@ function NewRosterSheet(props: { onClose: () => void; onCreated: (uid: string) =
   const [name, setName] = useState('')
   const [points, setPoints] = useState(2000)
   const [cat, setCat] = useState<string>()
+  const [group, setGroup] = useState<string>()
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string>()
   const groups = meta ? factions(meta) : []
@@ -150,13 +151,27 @@ function NewRosterSheet(props: { onClose: () => void; onCreated: (uid: string) =
             ]}
           />
           {error && <p style={{ color: 'var(--red)' }}>{error}</p>}
-          {groups.map((g) => (
-            <Section key={g.group} header={g.group}>
-              {g.items.map((c) => (
-                <Row key={c.id} title={c.short} checked={c.id === cat} onClick={() => setCat(c.id)} />
-              ))}
-            </Section>
-          ))}
+          <div className="tabs-inline">
+            {groups.map((g) => (
+              <button key={g.group} className={g.group === (group ?? groups[0]?.group) ? 'on' : ''} onClick={() => setGroup(g.group)}>
+                {g.group}
+              </button>
+            ))}
+          </div>
+          <div className="faction-grid">
+            {(groups.find((g) => g.group === (group ?? groups[0]?.group))?.items ?? []).map((c) => (
+              <button
+                key={c.id}
+                className={'faction-tile' + (c.id === cat ? ' on' : '')}
+                style={{ '--accent': factionColor(c.name) } as CSSProperties}
+                onClick={() => setCat(c.id)}
+                aria-pressed={c.id === cat}
+              >
+                <span>{c.short}</span>
+                {c.id === cat && <span className="faction-check">{Icon.check(16)}</span>}
+              </button>
+            ))}
+          </div>
         </>
       )}
     </Sheet>

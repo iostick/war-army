@@ -44,12 +44,31 @@ export function onChange(fn: (store: StoreName) => void) {
 }
 const emit = (s: StoreName) => listeners.forEach((l) => l(s))
 
+/** Aviso de cambios hechos en este dispositivo (para subirlos a la nube) */
+const writeHooks = new Set<(store: StoreName, key: string) => void>()
+export function onLocalWrite(fn: (store: StoreName, key: string) => void) {
+  writeHooks.add(fn)
+  return () => writeHooks.delete(fn)
+}
+
 export function table<T>(name: StoreName) {
+  const keyOf = (v: any): string => v.uid ?? v.key ?? v.id
   return {
     all: () => run<T[]>(name, 'readonly', (s) => s.getAll()),
     get: (key: string) => run<T | undefined>(name, 'readonly', (s) => s.get(key)),
-    put: (v: T) => run(name, 'readwrite', (s) => s.put(v)).then(() => emit(name)),
-    delete: (key: string) => run(name, 'readwrite', (s) => s.delete(key)).then(() => emit(name)),
+    put: (v: T) =>
+      run(name, 'readwrite', (s) => s.put(v)).then(() => {
+        emit(name)
+        writeHooks.forEach((h) => h(name, keyOf(v)))
+      }),
+    delete: (key: string) =>
+      run(name, 'readwrite', (s) => s.delete(key)).then(() => {
+        emit(name)
+        writeHooks.forEach((h) => h(name, key))
+      }),
+    /** Cambios que llegan de la nube: no se vuelven a subir */
+    putRemote: (v: T) => run(name, 'readwrite', (s) => s.put(v)).then(() => emit(name)),
+    deleteRemote: (key: string) => run(name, 'readwrite', (s) => s.delete(key)).then(() => emit(name)),
   }
 }
 

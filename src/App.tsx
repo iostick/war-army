@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { exportBackup, importBackup } from './data/backup'
+import { signIn, signOut, signUp, startCloud, syncNow, useCloud } from './data/cloud'
 import { DataProvider, useData } from './data/dataStatus'
 import { CollectionScreen } from './screens/CollectionScreen'
 import { GamesScreen } from './screens/GameScreen'
@@ -39,6 +40,7 @@ export default function App() {
     setTimeout(() => setToast(undefined), 2500)
   }, [])
   useEffect(() => applyTheme(loadTheme()), [])
+  useEffect(() => startCloud(), [])
   return (
     <DataProvider onUpdated={flash}>
       <GlossaryProvider>
@@ -116,6 +118,7 @@ function SettingsScreen({ flash }: { flash: (m: string) => void }) {
   }
   return (
     <Screen title="Ajustes">
+      <CloudSection flash={flash} />
       <Section header="Apariencia">
         {(
           [
@@ -182,6 +185,48 @@ function SettingsScreen({ flash }: { flash: (m: string) => void }) {
         <Row title="War Army" detail="11ª edición" />
       </Section>
     </Screen>
+  )
+}
+
+function CloudSection({ flash }: { flash: (m: string) => void }) {
+  const cloud = useCloud()
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [busy, setBusy] = useState(false)
+  const run = async (fn: () => Promise<string | void>) => {
+    setBusy(true)
+    try {
+      const m = await fn()
+      if (m) flash(m)
+    } catch (e) {
+      flash((e as Error).message)
+    } finally {
+      setBusy(false)
+    }
+  }
+  const user = cloud.session?.user
+  if (user) {
+    const last = cloud.lastSync ? new Date(cloud.lastSync).toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' }) : '—'
+    return (
+      <Section header="Sincronización" footer={cloud.error ? `Error: ${cloud.error}` : 'Listas, colección con fotos y partidas se sincronizan solas entre tus dispositivos.'}>
+        <Row title="Cuenta" detail={user.email} />
+        <Row title="Última sincronización" detail={cloud.syncing ? 'Sincronizando…' : last} />
+        <Row title="Sincronizar ahora" className="action" icon={Icon.refresh(16)} iconBg="var(--green)" onClick={cloud.syncing ? undefined : () => void syncNow()} />
+        <Row title="Cerrar sesión" className="destructive" onClick={() => void signOut()} />
+      </Section>
+    )
+  }
+  return (
+    <Section header="Sincronización" footer="Entra con la misma cuenta en el iPhone, el iPad y el Mac para tener las mismas listas, colección, fotos y partidas. La primera vez pulsa «Crear cuenta» y confirma el email.">
+      <div className="row">
+        <input className="text-input" type="email" autoComplete="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
+      </div>
+      <div className="row">
+        <input className="text-input" type="password" autoComplete="current-password" placeholder="Contraseña" value={password} onChange={(e) => setPassword(e.target.value)} />
+      </div>
+      <Row title={busy ? 'Un momento…' : 'Entrar'} className={'action' + (busy || !email || !password ? ' disabled' : '')} onClick={() => run(() => signIn(email.trim(), password))} />
+      <Row title="Crear cuenta" className={'action' + (busy || !email || !password ? ' disabled' : '')} onClick={() => run(() => signUp(email.trim(), password))} />
+    </Section>
   )
 }
 

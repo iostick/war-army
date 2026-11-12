@@ -39,6 +39,12 @@ jobs:
               -o "public/wahapedia/$f.csv" "https://wahapedia.ru/wh40k11ed/$f.csv" \
               || { echo "::warning::No se pudo descargar $f.csv de Wahapedia"; rm -f "public/wahapedia/$f.csv"; }
           done
+          for page in core-rules warhammer-event-companion rules-appendix; do
+            curl -fsSL --retry 3 --retry-delay 5 -A "Mozilla/5.0 (war-army personal app)" \
+              -o "public/wahapedia/$page.html" "https://wahapedia.ru/wh40k11ed/the-rules/$page/" \
+              || { echo "::warning::No se pudo descargar $page de Wahapedia"; rm -f "public/wahapedia/$page.html"; }
+          done
+          ls -la public/wahapedia
           wc -l public/wahapedia/*.csv || true
           head -c 300 public/wahapedia/Stratagems.csv || true
       - run: npm run build

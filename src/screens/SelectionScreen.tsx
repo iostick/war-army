@@ -5,6 +5,7 @@ import type { EntryNode } from '../engine/catalog'
 import type { Evaluator, OptionInfo, SelInst } from '../engine/evaluate'
 import { addSelection, attach, duplicateSelection, PTS, removeSelection, setNumber } from '../engine/ops'
 import { datasheet, optionText } from '../engine/profiles'
+import { detachments } from '../engine/rules11'
 import { splitKeywords } from '../data/glossary'
 import { collection, PAINT_STATUS } from '../data/db'
 import { usePhotoUrl } from '../data/photos'
@@ -205,6 +206,8 @@ export function SelectionScreen(props: { rosterUid: string; selUid: string; back
           })}
         </Section>
       ))}
+
+      {isRoot && <EnhancementHint ev={ev} inst={inst} />}
 
       {sheet && <DatasheetView sheet={sheet} index={index} />}
 
@@ -454,5 +457,24 @@ function CollectionCard(props: { index: DataIndex; catalogueId: string; entryId:
         </PhotoPicker>
       </div>
     </div>
+  )
+}
+
+/** Explica por qué un personaje no muestra mejoras */
+function EnhancementHint({ ev, inst }: { ev: Evaluator; inst: SelInst }) {
+  const cats = inst.node.categoryIds.map((id) => ev.index.categories.get(id)?.name)
+  if (!cats.includes('Character')) return null
+  const enh = ev.options(inst, true).filter((o) => o.groups.some((g) => /enhancement/i.test(g.name)))
+  if (enh.some((o) => !o.state.hidden || o.count > 0)) return null
+  const dets = detachments(ev)
+  const text = cats.includes('Epic Hero')
+    ? 'Los HÉROES ÉPICOS no pueden llevar mejoras.'
+    : !dets.length
+      ? 'Elige primero un destacamento en la lista: las mejoras dependen de él.'
+      : `Ninguna mejora de ${dets.map((d) => d.name).join(' / ')} vale para esta unidad: piden otras claves (p. ej. solo para ciertas miniaturas) o BSData aún no las incluye.`
+  return (
+    <Section header="Mejoras">
+      <div className="rule-text">{text}</div>
+    </Section>
   )
 }

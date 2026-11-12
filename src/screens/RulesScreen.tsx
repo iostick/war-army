@@ -5,11 +5,12 @@ import { useGlossary } from '../data/glossary'
 import { RichText } from '../ui/glossaryUi'
 import { Row, Screen, Search, Section } from '../ui/kit'
 import { StratagemList } from './GameScreen'
+import { RulebookList } from './RulebookScreen'
 
-type Tab = 'strat' | 'muster' | 'round' | 'glossary'
+type Tab = 'book' | 'strat' | 'muster' | 'round' | 'glossary'
 
 export function RulesScreen() {
-  const [tab, setTab] = useState<Tab>('strat')
+  const [tab, setTab] = useState<Tab>('book')
   const [q, setQ] = useState('')
   const [open, setOpen] = useState<string>()
   const g = useGlossary()
@@ -19,6 +20,7 @@ export function RulesScreen() {
       <div className="tabs-inline">
         {(
           [
+            ['book', 'Reglamento'],
             ['strat', 'Estratagemas'],
             ['muster', 'Crear ejército'],
             ['round', 'Ronda de batalla'],
@@ -30,6 +32,7 @@ export function RulesScreen() {
           </button>
         ))}
       </div>
+      {tab === 'book' && <RulebookList />}
       {tab === 'strat' && <StratagemList />}
       {tab === 'muster' && (
         <Section footer="Lo que la app comprueba al validar tus listas.">

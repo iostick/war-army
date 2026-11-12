@@ -8,6 +8,9 @@ import { CORE_STRATAGEMS } from '../data/coreRules'
 import { Icon, Row, Screen, Section, Sheet, Stepper } from '../ui/kit'
 import { useNav } from '../ui/nav'
 import { RosterScreen } from './RosterScreen'
+import { RulebookScreen } from './RulebookScreen'
+import { useData } from '../data/dataStatus'
+import { factions } from '../data/bsdata'
 import { useRoster } from '../data/session'
 import { detachments } from '../engine/rules11'
 import { DetachmentStratagems, WahapediaCredit } from '../ui/wahapediaUi'
@@ -77,6 +80,7 @@ function NewGameSheet({ onClose, onCreated }: { onClose: () => void; onCreated: 
   const [roster, setRoster] = useState<string>()
   const [opponent, setOpponent] = useState('')
   const [oppFaction, setOppFaction] = useState('')
+  const { meta } = useData()
   const [mission, setMission] = useState('')
   const create = async () => {
     const r = rosters?.find((x) => x.uid === roster)
@@ -100,7 +104,19 @@ function NewGameSheet({ onClose, onCreated }: { onClose: () => void; onCreated: 
           <input className="text-input" placeholder="Nombre del rival" value={opponent} onChange={(e) => setOpponent(e.target.value)} />
         </div>
         <div className="row">
-          <input className="text-input" placeholder="Su facción" value={oppFaction} onChange={(e) => setOppFaction(e.target.value)} />
+          <select className="select-input" value={oppFaction} onChange={(e) => setOppFaction(e.target.value)} aria-label="Facción del rival" style={{ color: oppFaction ? 'var(--label)' : 'var(--label-3)' }}>
+            <option value="">Su facción…</option>
+            {(meta ? factions(meta) : []).map((g) => (
+              <optgroup key={g.group} label={g.group}>
+                {g.items.map((c) => (
+                  <option key={c.id} value={c.short}>
+                    {c.short}
+                  </option>
+                ))}
+              </optgroup>
+            ))}
+          </select>
+          <span className="chevron" style={{ transform: 'rotate(90deg)' }}>{Icon.chevronRight()}</span>
         </div>
         <div className="row">
           <input className="text-input" placeholder="Misión o disposiciones" value={mission} onChange={(e) => setMission(e.target.value)} />
@@ -128,7 +144,7 @@ export function GameScreen({ id }: { id: string }) {
     save({ [key]: next } as Partial<Game>)
   }
   return (
-    <Screen title={`Ronda ${g.round}`} back="Partidas" subtitle={`${g.rosterName ?? 'Mi ejército'} vs ${g.opponent || 'Rival'}${g.mission ? ' · ' + g.mission : ''}`}>
+    <Screen title={`Ronda ${g.round}`} back="Partidas" subtitle={`${g.rosterName ?? 'Mi ejército'} vs ${g.opponent || 'Rival'}${g.opponentFaction ? ` (${g.opponentFaction})` : ''}${g.mission ? ' · ' + g.mission : ''}`}>
       <div className="score-grid">
         {([0, 1] as const).map((i) => (
           <div className="score-card" key={i}>
@@ -155,6 +171,8 @@ export function GameScreen({ id }: { id: string }) {
       </Section>
       <Section>
         <Row title="Estratagemas" icon={Icon.list(16)} chevron onClick={() => setStrats(true)} />
+        <Row title="Misiones (primarias y secundarias)" icon={Icon.dice(16)} chevron onClick={() => nav.push({ key: 'book:missions', render: () => <RulebookScreen id="warhammer-event-companion" back="Partida" /> })} />
+        <Row title="Reglas básicas" icon={Icon.shield(16)} chevron onClick={() => nav.push({ key: 'book:core', render: () => <RulebookScreen id="core-rules" back="Partida" /> })} />
         {g.rosterUid && <Row title="Ver mi lista" icon={Icon.shield(16)} chevron onClick={() => nav.push({ key: 'roster:' + g.rosterUid, render: () => <RosterScreen uid={g.rosterUid!} /> })} />}
       </Section>
       <Section header="Notas">

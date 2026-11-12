@@ -71,7 +71,10 @@ export function RosterScreen(props: { uid: string }) {
   }
 
   // Configuración y unidades (los líderes adjuntos se muestran bajo su unidad)
-  const config = force.selections.filter((s) => s.node.type === 'upgrade')
+  const CONFIG_ORDER = ['Battle Size', 'Detachment', 'Force Disposition']
+  const config = force.selections
+    .filter((s) => s.node.type === 'upgrade')
+    .sort((a, b) => (CONFIG_ORDER.indexOf(a.node.name) + 1 || 99) - (CONFIG_ORDER.indexOf(b.node.name) + 1 || 99))
   const units = force.selections.filter((s) => s.node.type !== 'upgrade' && !ev.bodyguardOf(s))
   const order: string[] = (force.forceEntry.categoryLinks ?? []).map((c: any) => c.targetId)
   const groups = new Map<string, SelInst[]>()
@@ -182,7 +185,10 @@ export function RosterScreen(props: { uid: string }) {
               const sum = list.reduce((a, s) => a + ev.selectionTotal(s, PTS) + ev.leadersOf(s).reduce((b, l) => b + ev.selectionTotal(l, PTS), 0), 0)
               return (
                 <Section key={cat} header={cat === 'other' ? 'Otros' : index.categories.get(cat)?.name ?? cat} headerRight={pts(sum)}>
-                  {list.flatMap((s) => [unitRow(s), ...ev.leadersOf(s).map((l) => unitRow(l, true))])}
+                  {list.flatMap((s) => {
+                    const leaders = ev.leadersOf(s)
+                    return leaders.length ? [...leaders.map((l) => unitRow(l)), unitRow(s, true)] : [unitRow(s)]
+                  })}
                 </Section>
               )
             })}

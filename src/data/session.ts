@@ -54,6 +54,13 @@ class RosterSession {
     this.saveTimer = setTimeout(() => rosterStore.put(next), 300)
   }
 
+  /** Una versión más nueva llegó de la nube */
+  applyRemote(r: Roster) {
+    const { roster, index } = this.snap
+    if (!roster || !index || roster.updatedAt >= r.updatedAt) return
+    this.set({ roster: r, index })
+  }
+
   subscribe = (l: () => void) => {
     this.listeners.add(l)
     return () => this.listeners.delete(l)
@@ -80,6 +87,10 @@ export function session(uid: string): RosterSession {
     sessions.set(uid, s)
   }
   return s
+}
+
+export function applyRemoteRoster(r: Roster) {
+  sessions.get(r.uid)?.applyRemote(r)
 }
 
 export function dropSession(uid: string) {
