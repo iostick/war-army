@@ -99,6 +99,11 @@ export const Icon = {
       <circle cx="12" cy="12.5" r="3.5" />
     </svg>
   ),
+  close: (s = 16) => (
+    <svg width={s} height={s} viewBox="0 0 24 24" {...P}>
+      <path d="M6 6l12 12M18 6 6 18" />
+    </svg>
+  ),
   shield: (s = 56) => (
     <svg width={s} height={s} viewBox="0 0 24 24" {...P} strokeWidth={1.4}>
       <path d="M12 3 4.5 6v5.5c0 4.5 3.1 8.3 7.5 9.5 4.4-1.2 7.5-5 7.5-9.5V6z" />

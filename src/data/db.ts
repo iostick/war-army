@@ -115,6 +115,16 @@ export interface Game {
   finished: boolean
   createdAt: string
   updatedAt: string
+  /** Mission set-up (Warhammer Event) */
+  myDisposition?: string
+  oppDisposition?: string
+  deployment?: string
+  /** 0 = I'm the attacker, 1 = opponent */
+  attacker?: 0 | 1
+  /** VP per battle round: [my primary, my secondary, their primary, their secondary] */
+  rounds?: [number, number, number, number][]
+  /** Secondary missions in play for each player */
+  secondaries?: [string[], string[]]
 }
 
 export const rosters = table<Roster>('rosters')

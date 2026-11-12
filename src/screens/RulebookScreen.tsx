@@ -3,11 +3,13 @@ import { Fragment, useMemo, useState } from 'react'
 import { RULE_PAGES, useRulesPage, type RuleSection } from '../data/wahaPages'
 import { Row, Screen, Search, Section, Spinner } from '../ui/kit'
 import { useNav } from '../ui/nav'
+import { MissionsScreen } from './MissionsScreen'
 
 export function RulebookList() {
   const nav = useNav()
   return (
     <Section footer="Text from Wahapedia, downloaded when the app is published and refreshed daily.">
+      <Row title="Missions" sub="Mission matrix, primary and secondary missions, deployments" chevron onClick={() => nav.push({ key: 'missions', render: () => <MissionsScreen /> })} />
       {RULE_PAGES.map((p) => (
         <Row key={p.id} title={p.title} sub={p.sub} chevron onClick={() => nav.push({ key: 'book:' + p.id, render: () => <RulebookScreen id={p.id} /> })} />
       ))}

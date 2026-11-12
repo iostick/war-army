@@ -17,7 +17,7 @@ export interface RuleSection {
 
 export const RULE_PAGES = [
   { id: 'core-rules', title: 'Core rules', sub: 'Movement, visibility, terrain, shooting, fighting…' },
-  { id: 'warhammer-event-companion', title: 'Missions', sub: 'Primary and secondary missions, deployments' },
+  { id: 'warhammer-event-companion', title: 'Event Companion', sub: 'Mission sequence, terrain layouts, pairings' },
   { id: 'rules-appendix', title: 'Rules appendix', sub: 'Clarifications and special cases' },
 ] as const
 
@@ -26,7 +26,7 @@ const SKIP_TITLES = /^(books|contents|table of contents|disable ads|see also)$/i
 const NOTE_TITLES = /^(faq|faqs|errata|designer.s notes?)$/i
 
 /** Sanitises a fragment: keeps only safe tags and attributes */
-function clean(el: Element, doc: Document): string {
+export function clean(el: Element, doc: Document): string {
   const out = doc.createElement('div')
   const copy = (src: Node, dst: Node) => {
     for (const n of [...src.childNodes]) {

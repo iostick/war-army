@@ -65,6 +65,14 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,svg,png,woff2,csv}'],
         maximumFileSizeToCacheInBytes: 12 * 1024 * 1024,
         navigateFallback: 'index.html',
+        runtimeCaching: [
+          {
+            // Deployment maps and rule diagrams from Wahapedia, kept for offline games
+            urlPattern: /^https:\/\/wahapedia\.ru\/.*\.(png|jpg|gif|webp)$/,
+            handler: 'CacheFirst',
+            options: { cacheName: 'wahapedia-img', expiration: { maxEntries: 400, maxAgeSeconds: 60 * 60 * 24 * 60 }, cacheableResponse: { statuses: [0, 200] } },
+          },
+        ],
       },
     }),
   ],
