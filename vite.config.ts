@@ -67,6 +67,12 @@ export default defineConfig({
         navigateFallback: 'index.html',
         runtimeCaching: [
           {
+            // Official terrain layouts (rendered from the Event Companion when publishing): kept once seen
+            urlPattern: /\/layouts\/\d+\.jpg$/,
+            handler: 'CacheFirst',
+            options: { cacheName: 'layouts', expiration: { maxEntries: 60 } },
+          },
+          {
             // Deployment maps and rule diagrams from Wahapedia, kept for offline games
             urlPattern: /^https:\/\/wahapedia\.ru\/.*\.(png|jpg|gif|webp)$/,
             handler: 'CacheFirst',
