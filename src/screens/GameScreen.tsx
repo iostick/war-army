@@ -9,8 +9,7 @@ import { Icon, Row, Screen, Section, Sheet, Stepper } from '../ui/kit'
 import { useNav } from '../ui/nav'
 import { RosterScreen } from './RosterScreen'
 import { RulebookScreen } from './RulebookScreen'
-import { useData } from '../data/dataStatus'
-import { factions } from '../data/bsdata'
+import { FactionPicker } from '../ui/factionPicker'
 import { useRoster } from '../data/session'
 import { detachments } from '../engine/rules11'
 import { DetachmentStratagems, WahapediaCredit } from '../ui/wahapediaUi'
@@ -80,7 +79,6 @@ function NewGameSheet({ onClose, onCreated }: { onClose: () => void; onCreated: 
   const [roster, setRoster] = useState<string>()
   const [opponent, setOpponent] = useState('')
   const [oppFaction, setOppFaction] = useState('')
-  const { meta } = useData()
   const [mission, setMission] = useState('')
   const create = async () => {
     const r = rosters?.find((x) => x.uid === roster)
@@ -104,24 +102,13 @@ function NewGameSheet({ onClose, onCreated }: { onClose: () => void; onCreated: 
           <input className="text-input" placeholder="Nombre del rival" value={opponent} onChange={(e) => setOpponent(e.target.value)} />
         </div>
         <div className="row">
-          <select className="select-input" value={oppFaction} onChange={(e) => setOppFaction(e.target.value)} aria-label="Facción del rival" style={{ color: oppFaction ? 'var(--label)' : 'var(--label-3)' }}>
-            <option value="">Su facción…</option>
-            {(meta ? factions(meta) : []).map((g) => (
-              <optgroup key={g.group} label={g.group}>
-                {g.items.map((c) => (
-                  <option key={c.id} value={c.short}>
-                    {c.short}
-                  </option>
-                ))}
-              </optgroup>
-            ))}
-          </select>
-          <span className="chevron" style={{ transform: 'rotate(90deg)' }}>{Icon.chevronRight()}</span>
-        </div>
-        <div className="row">
           <input className="text-input" placeholder="Misión o disposiciones" value={mission} onChange={(e) => setMission(e.target.value)} />
         </div>
       </Section>
+      <div className="section-header">
+        <span>Su ejército</span>
+      </div>
+      <FactionPicker value={oppFaction} onChange={(f) => setOppFaction(f.short)} />
       <Section header="Mi lista">
         <Row title="Sin lista" checked={!roster} onClick={() => setRoster(undefined)} />
         {(rosters ?? []).map((r) => (
