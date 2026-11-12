@@ -1,25 +1,42 @@
-// Meta: competitive tournament stats (faction win rates, detachments, events and top lists).
-import { useEffect, useMemo, useState, type CSSProperties } from 'react'
-import { allDetachments, fmtDate, useMeta, type MetaData, type MetaEvent, type MetaFaction } from '../data/meta'
+// Meta: competitive tournament stats (faction win rates, dispositions, detachments, events and published lists).
+import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react'
+import {
+  allDetachments,
+  byResult,
+  DISPO_COLOR,
+  DISPO_SHORT,
+  DISPOSITIONS,
+  fmtDate,
+  topLists,
+  unbeaten,
+  useMeta,
+  type Disposition,
+  type MetaData,
+  type MetaEvent,
+  type MetaList,
+} from '../data/meta'
 import { rosterStore } from '../data/rosterStore'
 import { factionColor } from '../ui/faction'
-import { Icon, Screen, Section, Segmented, Spinner } from '../ui/kit'
+import { Icon, Screen, Segmented, Spinner } from '../ui/kit'
 import { useNav } from '../ui/nav'
 
-type View = 'factions' | 'detachments' | 'events'
+type View = 'factions' | 'lists' | 'detachments' | 'events'
 type Sort = 'wr' | 'games' | 'overrep'
+type Dispo = Disposition | 'all'
 
 const norm = (s: string) => s.toLowerCase().replace(/[^a-z']/g, '')
 
 /** Factions the user has lists for, so they can be highlighted. */
-function useMyFactions(): Set<string> {
+function useMyFactions(): (faction: string) => boolean {
   const [names, setNames] = useState<string[]>([])
   useEffect(() => {
     rosterStore.all().then((rs) => setNames(rs.map((r) => r.summary?.faction ?? '').filter(Boolean)))
   }, [])
-  return useMemo(() => new Set(names.map((n) => norm(n.split(' - ').pop() ?? n))), [names])
+  return useMemo(() => {
+    const mine = names.map((n) => norm(n.split(' - ').pop() ?? n))
+    return (faction: string) => mine.some((m) => m.includes(norm(faction)) || norm(faction).includes(m))
+  }, [names])
 }
-const isMine = (mine: Set<string>, faction: string) => [...mine].some((m) => m.includes(norm(faction)) || norm(faction).includes(m))
 
 function wrClass(wr: number | null | undefined): string {
   if (wr == null) return 'wr-none'
@@ -27,25 +44,121 @@ function wrClass(wr: number | null | undefined): string {
   if (wr <= 48) return 'wr-down'
   return 'wr-even'
 }
-const unbeaten = (record: string) => Number(record.split('-')[1] ?? 0) === 0
-const pct = (n: number | null | undefined, digits = 1) => (n == null ? '—' : `${n.toFixed(digits).replace(/\.0$/, '')}%`)
+const pct = (n: number | null | undefined) => (n == null ? '—' : `${n.toFixed(1).replace(/\.0$/, '')}%`)
+const accent = (faction?: string) => ({ '--accent': factionColor(faction) }) as CSSProperties
 
-/** Bar centred on 50%: grows right when above, left when below. */
-function WrBar({ wr }: { wr: number | null }) {
-  if (wr == null) return <div className="wr-bar" />
-  const d = Math.max(-25, Math.min(25, wr - 50))
-  const style: CSSProperties = d >= 0 ? { left: '50%', width: `${(d / 25) * 50}%` } : { right: '50%', width: `${(-d / 25) * 50}%` }
-  return (
-    <div className="wr-bar">
-      <span className={'wr-fill ' + wrClass(wr)} style={style} />
-      <span className="wr-mid" />
+// ---------- Building blocks: every Meta row shares the same three columns ----------
+
+function Item(props: {
+  lead?: ReactNode
+  title: ReactNode
+  lines?: ReactNode[]
+  figure?: ReactNode
+  figureSub?: string
+  onClick?: () => void
+  style?: CSSProperties
+  className?: string
+}) {
+  const body = (
+    <>
+      <span className="mi-lead">{props.lead}</span>
+      <span className="mi-body">
+        <span className="mi-title">{props.title}</span>
+        {props.lines?.filter(Boolean).map((l, i) => (
+          <span className="mi-line" key={i}>
+            {l}
+          </span>
+        ))}
+      </span>
+      <span className="mi-figure">
+        {props.figure}
+        {props.figureSub && <small>{props.figureSub}</small>}
+      </span>
+    </>
+  )
+  const cls = 'meta-item ' + (props.className ?? '') + (props.onClick ? ' pressable' : '')
+  return props.onClick ? (
+    <div role="button" tabIndex={0} className={cls} style={props.style} onClick={props.onClick} onKeyDown={(e) => e.key === 'Enter' && props.onClick!()}>
+      {body}
+    </div>
+  ) : (
+    <div className={cls} style={props.style}>
+      {body}
     </div>
   )
 }
 
+function Group(props: { title?: ReactNode; right?: ReactNode; footer?: ReactNode; children: ReactNode }) {
+  return (
+    <section className="meta-group">
+      {(props.title || props.right) && (
+        <header>
+          <span>{props.title}</span>
+          {props.right}
+        </header>
+      )}
+      <div className="meta-items">{props.children}</div>
+      {props.footer && <p className="meta-foot">{props.footer}</p>}
+    </section>
+  )
+}
+
+function DispoTag({ d }: { d: Disposition | null }) {
+  if (!d) return null
+  return (
+    <span className="dispo-tag" style={{ '--dc': DISPO_COLOR[d] } as CSSProperties}>
+      {DISPO_SHORT[d]}
+    </span>
+  )
+}
+
+function Record({ r }: { r: string }) {
+  return <span className={'record' + (unbeaten(r) ? ' perfect' : '')}>{r}</span>
+}
+
+/** Bar centred on 50%: grows right when above, left when below. */
+function WrBar({ wr }: { wr: number | null }) {
+  if (wr == null) return <span className="wr-bar" />
+  const d = Math.max(-25, Math.min(25, wr - 50))
+  const style: CSSProperties = d >= 0 ? { left: '50%', width: `${(d / 25) * 50}%` } : { right: '50%', width: `${(-d / 25) * 50}%` }
+  return (
+    <span className="wr-bar">
+      <span className={'wr-fill ' + wrClass(wr)} style={style} />
+      <span className="wr-mid" />
+    </span>
+  )
+}
+
+function ShareBar({ value, max = 100, color }: { value: number; max?: number; color?: string }) {
+  return (
+    <span className="share-bar">
+      <span style={{ width: `${Math.min(100, (value / max) * 100)}%`, background: color ?? 'var(--accent)' }} />
+    </span>
+  )
+}
+
+function DispoChips({ value, onChange, rates }: { value: Dispo; onChange: (d: Dispo) => void; rates?: MetaData['dispositions'] }) {
+  return (
+    <div className="chip-scroll" role="tablist" aria-label="Force disposition">
+      <button className={'chip' + (value === 'all' ? ' on' : '')} onClick={() => onChange('all')}>
+        All dispositions
+      </button>
+      {DISPOSITIONS.map((d) => (
+        <button key={d} className={'chip dispo' + (value === d ? ' on' : '')} style={{ '--dc': DISPO_COLOR[d] } as CSSProperties} onClick={() => onChange(d)}>
+          {d}
+          {rates && <span className="chip-wr">{pct(rates.find((r) => r.name === d)?.wr)}</span>}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+// ---------- Root ----------
+
 export function MetaScreen() {
   const { data, error } = useMeta()
   const [view, setView] = useState<View>('factions')
+  const [dispo, setDispo] = useState<Dispo>('all')
   if (error)
     return (
       <Screen title="Meta">
@@ -63,8 +176,8 @@ export function MetaScreen() {
         </div>
       </Screen>
     )
-  const best = data.factions.find((f) => f.winRate != null)
   const games = Math.round(data.factions.reduce((n, f) => n + f.games, 0) / 2)
+  const weekend = data.events.filter((e) => e.date >= data.windowStart).length
   return (
     <Screen title="Meta" subtitle={`Tournament results · ${data.window}`}>
       <div className="meta-stats">
@@ -73,106 +186,235 @@ export function MetaScreen() {
           <span>games</span>
         </div>
         <div className="meta-stat">
-          <b>{data.events.length}</b>
+          <b>{weekend}</b>
           <span>events</span>
         </div>
-        {best && (
-          <div className="meta-stat" style={{ '--accent': factionColor(best.faction) } as CSSProperties}>
-            <b className="accent">{pct(best.winRate)}</b>
-            <span>{best.faction}</span>
-          </div>
-        )}
+        <div className="meta-stat">
+          <b>{data.lists.length}</b>
+          <span>top lists</span>
+        </div>
       </div>
+      <DispoChips value={dispo} onChange={setDispo} rates={data.dispositions} />
+      <DispoSummary data={data} dispo={dispo} />
       <Segmented
         value={view}
         onChange={setView}
         options={[
           { value: 'factions', label: 'Factions' },
-          { value: 'detachments', label: 'Detachments' },
+          { value: 'lists', label: 'Top lists' },
+          { value: 'detachments', label: 'Detach.' },
           { value: 'events', label: 'Events' },
         ]}
       />
-      <div style={{ height: 14 }} />
-      {view === 'factions' && <FactionsView data={data} />}
-      {view === 'detachments' && <DetachmentsView data={data} />}
-      {view === 'events' && <EventsView data={data} />}
+      {view === 'factions' && <FactionsView data={data} dispo={dispo} />}
+      {view === 'lists' && <ListsView data={data} dispo={dispo} />}
+      {view === 'detachments' && <DetachmentsView data={data} dispo={dispo} />}
+      {view === 'events' && <EventsView data={data} dispo={dispo} />}
       <Sources data={data} />
     </Screen>
   )
 }
 
-function FactionsView({ data }: { data: MetaData }) {
+function DispoSummary({ data, dispo }: { data: MetaData; dispo: Dispo }) {
+  if (dispo === 'all') return null
+  const d = data.dispositions.find((x) => x.name === dispo)
+  if (!d) return null
+  return (
+    <div className="dispo-card" style={{ '--dc': DISPO_COLOR[dispo] } as CSSProperties}>
+      <div>
+        <b>{dispo}</b>
+        <span>
+          {d.games.toLocaleString('en-GB')} games · {pct(d.field)} of the field
+        </span>
+      </div>
+      <b className={'dispo-card-wr ' + wrClass(d.wr)}>{pct(d.wr)}</b>
+    </div>
+  )
+}
+
+function FactionsView({ data, dispo }: { data: MetaData; dispo: Dispo }) {
   const nav = useNav()
-  const mine = useMyFactions()
+  const isMine = useMyFactions()
   const [sort, setSort] = useState<Sort>('wr')
+  const share = (f: (typeof data.factions)[number]) => f.dispositions.find((x) => x.name === dispo)?.pct ?? 0
   const rows = [...data.factions].sort((a, b) =>
-    sort === 'games' ? b.games - a.games : sort === 'overrep' ? (b.overrep ?? -1) - (a.overrep ?? -1) : (b.winRate ?? -1) - (a.winRate ?? -1),
+    dispo !== 'all'
+      ? share(b) - share(a)
+      : sort === 'games'
+        ? b.games - a.games
+        : sort === 'overrep'
+          ? (b.overrep ?? -1) - (a.overrep ?? -1)
+          : (b.winRate ?? -1) - (a.winRate ?? -1),
   )
   return (
     <>
-      <div className="chip-row">
-        {(
-          [
-            ['wr', 'Win rate'],
-            ['games', 'Most played'],
-            ['overrep', 'Top finishes'],
-          ] as [Sort, string][]
-        ).map(([s, l]) => (
-          <button key={s} className={'chip' + (sort === s ? ' on' : '')} onClick={() => setSort(s)}>
-            {l}
-          </button>
-        ))}
+      {dispo === 'all' ? (
+        <div className="chip-row">
+          {(
+            [
+              ['wr', 'Win rate'],
+              ['games', 'Most played'],
+              ['overrep', 'Top finishes'],
+            ] as [Sort, string][]
+          ).map(([s, l]) => (
+            <button key={s} className={'chip' + (sort === s ? ' on' : '')} onClick={() => setSort(s)}>
+              {l}
+            </button>
+          ))}
+        </div>
+      ) : (
+        <p className="meta-hint">Sorted by how many of each faction's players chose {dispo} this window.</p>
+      )}
+      <div className="meta-items">
+        {rows.map((f, i) => {
+          const mine = isMine(f.faction)
+          const figure = dispo !== 'all' ? pct(share(f)) : sort === 'games' ? String(f.games) : sort === 'overrep' ? (f.overrep?.toFixed(2) ?? '—') : pct(f.winRate)
+          return (
+            <Item
+              key={f.faction}
+              className={'faction' + (mine ? ' mine' : '')}
+              style={accent(f.faction)}
+              lead={<span className="mi-rank">{i + 1}</span>}
+              title={
+                <>
+                  <span className="mi-faction">{f.faction}</span>
+                  {mine && <span className="meta-tag">Your army</span>}
+                </>
+              }
+              lines={[
+                dispo !== 'all' ? <ShareBar value={share(f)} color={DISPO_COLOR[dispo]} /> : <WrBar wr={f.winRate} />,
+                f.games
+                  ? `${dispo !== 'all' ? `${pct(f.winRate)} win rate · ` : ''}${f.games} games · ${f.players} players${f.eventWins ? ` · ${f.eventWins} win${f.eventWins > 1 ? 's' : ''}` : ''}`
+                  : 'No games this window',
+              ]}
+              figure={<b className={dispo === 'all' && sort === 'wr' ? wrClass(f.winRate) : ''}>{figure}</b>}
+              figureSub={dispo !== 'all' ? 'of players' : sort === 'games' ? 'games' : sort === 'overrep' ? 'over-rep' : 'win rate'}
+              onClick={() => nav.push({ key: 'meta:f:' + f.faction, render: () => <FactionMetaScreen data={data} faction={f.faction} dispo={dispo} /> })}
+            />
+          )
+        })}
       </div>
-      <div className="meta-list">
-        {rows.map((f, i) => (
-          <button
-            key={f.faction}
-            className={'meta-row' + (isMine(mine, f.faction) ? ' mine' : '')}
-            style={{ '--accent': factionColor(f.faction) } as CSSProperties}
-            onClick={() =>
-              nav.push({
-                key: 'meta:f:' + f.faction,
-                render: () => <FactionMetaScreen data={data} faction={f.faction} />,
-              })
-            }
-          >
-            <span className="meta-rank">{i + 1}</span>
-            <span className="meta-main">
-              <span className="meta-name">
-                {f.faction}
-                {isMine(mine, f.faction) && <span className="meta-tag">Your army</span>}
-              </span>
-              <span className="meta-sub">
-                {f.games ? `${f.games} games · ${f.players} players` : 'No games this window'}
-                {f.eventWins > 0 && ` · ${f.eventWins} event win${f.eventWins > 1 ? 's' : ''}`}
-              </span>
-              <WrBar wr={f.winRate} />
-            </span>
-            <span className="meta-figure">
-              <b className={wrClass(f.winRate)}>{sort === 'games' ? f.games : sort === 'overrep' ? (f.overrep?.toFixed(2) ?? '—') : pct(f.winRate)}</b>
-              <small>{sort === 'games' ? 'games' : sort === 'overrep' ? 'over-rep' : 'win rate'}</small>
-            </span>
-          </button>
-        ))}
-      </div>
-      <Section header={data.trend4w.label} footer={`Source: ${data.trend4w.source}.`}>
+      <Group title={data.trend4w.label} footer={`Source: ${data.trend4w.source}.`}>
         {data.trend4w.rows.map(([name, wr]) => (
-          <div className="row" key={name}>
-            <span className="dot" style={{ background: factionColor(name) }} />
-            <div className="row-body">
-              <div className="row-title">{name}</div>
-            </div>
-            <span className={'row-detail ' + wrClass(wr)}>{wr}%</span>
-          </div>
+          <Item
+            key={name}
+            style={accent(name)}
+            lead={<span className="dispo-dot" style={{ background: 'var(--accent)' }} />}
+            title={name}
+            figure={<b className={wrClass(wr)}>{wr}%</b>}
+          />
         ))}
-      </Section>
+      </Group>
     </>
   )
 }
 
-function DetachmentsView({ data }: { data: MetaData }) {
+function ListRow({ l, data, showFaction = true }: { l: MetaList; data: MetaData; showFaction?: boolean }) {
+  const nav = useNav()
+  const ev = data.events.find((e) => e.name === l.event)
+  return (
+    <Item
+      style={accent(l.faction)}
+      lead={<Record r={l.record} />}
+      title={l.player}
+      lines={[
+        <>
+          {showFaction && <b className="mi-accent">{l.faction}</b>}
+          {showFaction && l.detachment && ' · '}
+          {l.detachment}
+        </>,
+        <>
+          <DispoTag d={l.disposition} /> {l.event} · {l.eventPlayers} players · {fmtDate(l.date)}
+        </>,
+      ]}
+      figure={<span className="chevron">{Icon.chevronRight()}</span>}
+      onClick={ev ? () => nav.push({ key: 'meta:e:' + ev.name, render: () => <EventMetaScreen data={data} event={ev} /> }) : undefined}
+    />
+  )
+}
+
+function ListsView({ data, dispo }: { data: MetaData; dispo: Dispo }) {
+  const [faction, setFaction] = useState('all')
+  const [recent, setRecent] = useState(true)
+  const [limit, setLimit] = useState(40)
+  const rows = data.lists
+    .filter((l) => (dispo === 'all' || l.disposition === dispo) && (faction === 'all' || l.faction === faction) && (!recent || l.date >= data.windowStart))
+    .sort((a, b) => b.date.localeCompare(a.date) || byResult(a, b))
+  return (
+    <>
+      <div className="meta-filters">
+        <select className="select-input" value={faction} onChange={(e) => setFaction(e.target.value)} aria-label="Faction">
+          <option value="all">All factions</option>
+          {[...data.factions]
+            .sort((a, b) => a.faction.localeCompare(b.faction))
+            .map((f) => (
+              <option key={f.faction} value={f.faction}>
+                {f.faction}
+              </option>
+            ))}
+        </select>
+        <Segmented
+          value={recent ? 'w' : 'a'}
+          onChange={(v) => setRecent(v === 'w')}
+          options={[
+            { value: 'w', label: 'This window' },
+            { value: 'a', label: 'Since Sept' },
+          ]}
+        />
+      </div>
+      <Group
+        title={`${rows.length} list${rows.length === 1 ? '' : 's'}`}
+        footer="Top finishes published on Listhammer (4-1 or better). Listhammer shows the army summary only; the full unit list stays on Best Coast Pairings."
+      >
+        {rows.slice(0, limit).map((l) => (
+          <ListRow key={l.faction + l.player + l.event} l={l} data={data} />
+        ))}
+        {rows.length === 0 && <div className="meta-empty">No published lists match these filters.</div>}
+      </Group>
+      {rows.length > limit && (
+        <button className="button-plain meta-more" onClick={() => setLimit((n) => n + 40)}>
+          Show more ({rows.length - limit})
+        </button>
+      )}
+    </>
+  )
+}
+
+function DetachmentsView({ data, dispo }: { data: MetaData; dispo: Dispo }) {
   const nav = useNav()
   const [popular, setPopular] = useState(false)
+  if (dispo !== 'all') {
+    // Which detachment combinations reach the top tables on this disposition
+    const counts = new Map<string, { faction: string; name: string; n: number; unbeaten: number }>()
+    for (const l of data.lists) {
+      if (l.disposition !== dispo || !l.detachment) continue
+      const k = l.faction + '|' + l.detachment
+      const c = counts.get(k) ?? { faction: l.faction, name: l.detachment, n: 0, unbeaten: 0 }
+      c.n++
+      if (unbeaten(l.record)) c.unbeaten++
+      counts.set(k, c)
+    }
+    const rows = [...counts.values()].sort((a, b) => b.n - a.n || b.unbeaten - a.unbeaten).slice(0, 30)
+    return (
+      <Group
+        title={`Top finishes on ${dispo}`}
+        footer="Counted from the published top lists since September. Listhammer doesn't split win rates by disposition and detachment together."
+      >
+        {rows.map((r) => (
+          <Item
+            key={r.faction + r.name}
+            style={accent(r.faction)}
+            lead={<span className="dispo-dot" style={{ background: 'var(--accent)' }} />}
+            title={r.name}
+            lines={[<b className="mi-accent">{r.faction}</b>, r.unbeaten ? `${r.unbeaten} unbeaten` : '']}
+            figure={<b>{r.n}</b>}
+            figureSub="lists"
+            onClick={() => nav.push({ key: 'meta:f:' + r.faction, render: () => <FactionMetaScreen data={data} faction={r.faction} dispo={dispo} /> })}
+          />
+        ))}
+      </Group>
+    )
+  }
   const rows = allDetachments(data)
     .filter((d) => d.wr != null && d.field >= 5 && d.factionGames >= 50)
     .sort((a, b) => (popular ? b.field * b.factionGames - a.field * a.factionGames : (b.wr ?? 0) - (a.wr ?? 0)))
@@ -186,116 +428,115 @@ function DetachmentsView({ data }: { data: MetaData }) {
           Most played
         </button>
       </div>
-      <Section footer="Detachment combinations used by at least 5% of a faction's players, in factions with 50+ games. Field share is within that faction.">
+      <Group footer="Detachment combinations used by at least 5% of a faction's players, in factions with 50+ games. Share is within that faction.">
         {rows.map((d) => (
-          <div
-            role="button"
-            tabIndex={0}
-            className="row pressable meta-det"
+          <Item
             key={d.faction + d.name}
-            style={{ '--accent': factionColor(d.faction) } as CSSProperties}
-            onClick={() =>
-              nav.push({
-                key: 'meta:f:' + d.faction,
-                render: () => <FactionMetaScreen data={data} faction={d.faction} />,
-              })
-            }
-          >
-            <span className="dot" style={{ background: 'var(--accent)' }} />
-            <div className="row-body">
-              <div className="row-title">{d.name}</div>
-              <div className="row-sub">
-                {d.faction} · {pct(d.field)} of players
-              </div>
-            </div>
-            <span className={'row-detail meta-wr ' + wrClass(d.wr)}>{pct(d.wr)}</span>
-          </div>
+            style={accent(d.faction)}
+            lead={<span className="dispo-dot" style={{ background: 'var(--accent)' }} />}
+            title={d.name}
+            lines={[
+              <>
+                <b className="mi-accent">{d.faction}</b> · {pct(d.field)} of players
+              </>,
+            ]}
+            figure={<b className={wrClass(d.wr)}>{pct(d.wr)}</b>}
+            figureSub="win rate"
+            onClick={() => nav.push({ key: 'meta:f:' + d.faction, render: () => <FactionMetaScreen data={data} faction={d.faction} dispo={dispo} /> })}
+          />
         ))}
-      </Section>
+      </Group>
     </>
   )
 }
 
-function EventsView({ data }: { data: MetaData }) {
+function DateLead({ iso }: { iso: string }) {
+  const d = new Date(iso + 'T12:00:00')
+  return (
+    <span className="meta-date">
+      <b>{d.getDate()}</b>
+      <small>{d.toLocaleDateString('en-GB', { month: 'short' })}</small>
+    </span>
+  )
+}
+
+function EventsView({ data, dispo }: { data: MetaData; dispo: Dispo }) {
   const nav = useNav()
+  const [recent, setRecent] = useState(true)
+  const events = data.events.filter((e) => (!recent || e.date >= data.windowStart) && (dispo === 'all' || data.lists.some((l) => l.event === e.name && l.disposition === dispo)))
   return (
     <>
-      <Section header="Singles events" footer="Events with lists published on Listhammer, newest first. Finishes shown are the best placed lists found per faction.">
-        {data.events.map((e) => {
-          const top = e.results[0]
+      <div className="meta-filters">
+        <Segmented
+          value={recent ? 'w' : 'a'}
+          onChange={(v) => setRecent(v === 'w')}
+          options={[
+            { value: 'w', label: 'This window' },
+            { value: 'a', label: 'Since Sept' },
+          ]}
+        />
+      </div>
+      <Group title="Singles events" footer="Events with top lists published on Listhammer, newest first.">
+        {events.map((e) => {
+          const best = data.lists.filter((l) => l.event === e.name && (dispo === 'all' || l.disposition === dispo)).sort(byResult)[0]
           return (
-            <div
-              role="button"
-              tabIndex={0}
-              className="row pressable"
+            <Item
               key={e.name}
-              onClick={() =>
-                nav.push({
-                  key: 'meta:e:' + e.name,
-                  render: () => <EventMetaScreen data={data} event={e} />,
-                })
-              }
-            >
-              <span className="meta-date">
-                <b>{new Date(e.date + 'T12:00:00').getDate()}</b>
-                <small>
-                  {new Date(e.date + 'T12:00:00').toLocaleDateString('en-GB', {
-                    month: 'short',
-                  })}
-                </small>
-              </span>
-              <div className="row-body">
-                <div className="row-title">{e.name}</div>
-                <div className="row-sub">
-                  {e.players} players
-                  {e.winner ? (
-                    <>
-                      {' · '}
-                      <span className="meta-winner" style={{ color: factionColor(e.winnerFaction) }}>
-                        {Icon.trophy(12)} {e.winnerFaction}
-                      </span>
-                    </>
-                  ) : (
-                    top && ` · ${top.record} ${top.faction}`
-                  )}
-                </div>
-              </div>
-              <span className="chevron">{Icon.chevronRight()}</span>
-            </div>
+              style={accent(e.winnerFaction ?? best?.faction)}
+              lead={<DateLead iso={e.date} />}
+              title={e.name}
+              lines={[
+                e.winner ? (
+                  <span className="meta-winner">
+                    {Icon.trophy(12)} {e.winnerFaction}
+                  </span>
+                ) : best ? (
+                  <>
+                    Best listed: {best.record} <b className="mi-accent">{best.faction}</b>
+                  </>
+                ) : (
+                  ''
+                ),
+              ]}
+              figure={<b>{e.players}</b>}
+              figureSub="players"
+              onClick={() => nav.push({ key: 'meta:e:' + e.name, render: () => <EventMetaScreen data={data} event={e} /> })}
+            />
           )
         })}
-      </Section>
-      <Section header="Team events" footer="Winning teams reported by Tabletop Battles.">
+      </Group>
+      <Group title="Team events" footer="Winning teams reported by Tabletop Battles.">
         {data.teamEvents.map((t) => (
-          <div className="row" key={t.name}>
-            <div className="row-body">
-              <div className="row-title">{t.name}</div>
-              <div className="row-sub">{t.players ? `${t.players} players` : 'Teams'}</div>
-            </div>
-            <span className="row-detail">{t.winner}</span>
-          </div>
+          <Item
+            key={t.name}
+            lead={Icon.trophy(18)}
+            title={t.name}
+            lines={[t.winner]}
+            figure={t.players ? <b>{t.players}</b> : undefined}
+            figureSub={t.players ? 'players' : undefined}
+          />
         ))}
-      </Section>
+      </Group>
     </>
   )
 }
 
 function Sources({ data }: { data: MetaData }) {
   return (
-    <Section
-      header="Sources"
-      footer={`${data.filters} Snapshot updated ${new Date(data.updated + 'T12:00:00').toLocaleDateString('en-GB', { dateStyle: 'medium' })}. Full army lists are on Listhammer.`}
-    >
+    <Group title="Sources" footer={`${data.filters} Snapshot updated ${new Date(data.updated + 'T12:00:00').toLocaleDateString('en-GB', { dateStyle: 'medium' })}.`}>
       {data.sources.map((s) => (
-        <a className="row pressable" key={s.name} href={s.url} target="_blank" rel="noreferrer">
-          <div className="row-body">
-            <div className="row-title">{s.name}</div>
-            <div className="row-sub">{s.what}</div>
-          </div>
-          <span className="chevron">{Icon.chevronRight()}</span>
+        <a className="meta-item pressable" key={s.name} href={s.url} target="_blank" rel="noreferrer">
+          <span className="mi-lead">{Icon.share(18)}</span>
+          <span className="mi-body">
+            <span className="mi-title">{s.name}</span>
+            <span className="mi-line">{s.what}</span>
+          </span>
+          <span className="mi-figure">
+            <span className="chevron">{Icon.chevronRight()}</span>
+          </span>
         </a>
       ))}
-    </Section>
+    </Group>
   )
 }
 
@@ -308,28 +549,21 @@ function Stat({ label, value }: { label: string; value: string | number }) {
   )
 }
 
-export function FactionMetaScreen({ data, faction }: { data: MetaData; faction: string }) {
-  const nav = useNav()
-  const f = data.factions.find((x) => x.faction === faction) as MetaFaction
+export function FactionMetaScreen({ data, faction, dispo: initial = 'all' }: { data: MetaData; faction: string; dispo?: Dispo }) {
+  const [dispo, setDispo] = useState<Dispo>(initial)
+  const f = data.factions.find((x) => x.faction === faction)!
+  const ranked = data.factions.filter((x) => x.winRate != null).sort((a, b) => (b.winRate ?? 0) - (a.winRate ?? 0))
+  const rank = ranked.indexOf(f) + 1
   const maxField = Math.max(1, ...f.detachments.map((d) => d.field))
-  const rank =
-    [...data.factions]
-      .filter((x) => x.winRate != null)
-      .sort((a, b) => (b.winRate ?? 0) - (a.winRate ?? 0))
-      .indexOf(f) + 1
-  const openEvent = (name: string) => {
-    const e = data.events.find((x) => x.name === name)
-    if (e)
-      nav.push({
-        key: 'meta:e:' + name,
-        render: () => <EventMetaScreen data={data} event={e} />,
-      })
-  }
+  const top = topLists(data, f)
+  const lists = (
+    dispo === 'all' ? top : data.lists.filter((l) => l.faction === faction && l.disposition === dispo).sort((a, b) => b.date.localeCompare(a.date) || byResult(a, b))
+  ).slice(0, 25)
   return (
     <Screen title={faction} back="Meta" large={false}>
-      <div style={{ '--accent': factionColor(faction) } as CSSProperties}>
+      <div style={accent(faction)}>
         <div className="meta-hero">
-          <span className="roster-faction">{rank ? `#${rank} of ${data.factions.filter((x) => x.winRate != null).length} by win rate` : 'No games this window'}</span>
+          <span className="roster-faction">{rank ? `#${rank} of ${ranked.length} by win rate` : 'No games this window'}</span>
           <span className="roster-name">{faction}</span>
           <span className="meta-hero-wr">{pct(f.winRate)}</span>
           <div className="meta-hero-grid">
@@ -341,48 +575,53 @@ export function FactionMetaScreen({ data, faction }: { data: MetaData; faction: 
             <Stat label="Over-rep" value={f.overrep?.toFixed(2) ?? '—'} />
           </div>
         </div>
-        {f.detachments.length > 0 && (
-          <Section header="Detachments" footer="Bar: share of this faction's players. Right: win rate with that combination.">
-            {f.detachments.map((d) => (
-              <div className="row meta-det-row" key={d.name}>
-                <div className="row-body">
-                  <div className="row-title">{d.name}</div>
-                  <div className="field-bar">
-                    <span style={{ width: `${(d.field / maxField) * 100}%` }} />
-                  </div>
-                  <div className="row-sub">{pct(d.field)} of players</div>
-                </div>
-                <span className={'row-detail meta-wr ' + wrClass(d.wr)}>{pct(d.wr)}</span>
-              </div>
+        {f.dispositions.length > 0 && (
+          <Group title="Dispositions" footer="Share of this faction's players on each disposition this window.">
+            {f.dispositions.map((d) => (
+              <Item
+                key={d.name}
+                lead={<span className="dispo-dot" style={{ background: DISPO_COLOR[d.name] }} />}
+                title={d.name}
+                lines={[<ShareBar value={d.pct} color={DISPO_COLOR[d.name]} />, `${d.count} player${d.count === 1 ? '' : 's'}`]}
+                figure={<b>{pct(d.pct)}</b>}
+              />
             ))}
-          </Section>
+          </Group>
         )}
-        <Section header="Top lists" footer="Best placed lists published on Listhammer. Tap one to see the event.">
-          {f.topLists.map((l) => (
-            <div role="button" tabIndex={0} className="row pressable meta-list-row" key={l.player + l.event} onClick={() => openEvent(l.event)}>
-              <span className={'record' + (unbeaten(l.record) ? ' perfect' : '')}>{l.record}</span>
-              <div className="row-body">
-                <div className="row-title">{l.player}</div>
-                <div className="row-sub">{l.detachment}</div>
-                <div className="row-sub">
-                  {l.event} · {l.eventPlayers} players · {fmtDate(l.date)}
-                </div>
-              </div>
-              <span className="chevron">{Icon.chevronRight()}</span>
-            </div>
+        {f.detachments.length > 0 && (
+          <Group title="Detachments" footer="Bar: share of this faction's players. Right: win rate with that combination.">
+            {f.detachments.map((d) => (
+              <Item
+                key={d.name}
+                lead={<span className="dispo-dot" style={{ background: 'var(--accent)' }} />}
+                title={d.name}
+                lines={[<ShareBar value={d.field} max={maxField} />, `${pct(d.field)} of players`]}
+                figure={<b className={wrClass(d.wr)}>{pct(d.wr)}</b>}
+                figureSub="win rate"
+              />
+            ))}
+          </Group>
+        )}
+        <DispoChips value={dispo} onChange={setDispo} />
+        <Group
+          title={dispo === 'all' ? 'Top lists' : `Lists on ${dispo}`}
+          footer={dispo === 'all' ? "Listhammer's best placed lists for this faction. Tap one to see the event." : 'Published top finishes since September with this disposition.'}
+        >
+          {lists.map((l) => (
+            <ListRow key={l.player + l.event} l={l} data={data} showFaction={false} />
           ))}
-        </Section>
+          {lists.length === 0 && <div className="meta-empty">No published lists with this disposition.</div>}
+        </Group>
       </div>
     </Screen>
   )
 }
 
 export function EventMetaScreen({ data, event: e }: { data: MetaData; event: MetaEvent }) {
-  const nav = useNav()
-  const accent = factionColor(e.winnerFaction ?? e.results[0]?.faction)
+  const results = data.lists.filter((l) => l.event === e.name).sort(byResult)
   return (
     <Screen title={e.name} back="Back" large={false}>
-      <div className="meta-hero" style={{ '--accent': accent } as CSSProperties}>
+      <div className="meta-hero" style={accent(e.winnerFaction ?? results[0]?.faction)}>
         <span className="roster-faction">
           {fmtDate(e.date)} 2026{e.location ? ` · ${e.location}` : ''}
         </span>
@@ -390,7 +629,7 @@ export function EventMetaScreen({ data, event: e }: { data: MetaData; event: Met
         <div className="meta-hero-grid">
           <Stat label="Players" value={e.players} />
           {e.rounds && <Stat label="Rounds" value={e.rounds} />}
-          <Stat label="Lists here" value={e.results.length} />
+          <Stat label="Lists here" value={results.length} />
         </div>
         {e.winner && (
           <div className="meta-hero-winner">
@@ -398,37 +637,12 @@ export function EventMetaScreen({ data, event: e }: { data: MetaData; event: Met
           </div>
         )}
       </div>
-      {e.note && (
-        <Section>
-          <div className="rule-text">{e.note}</div>
-        </Section>
-      )}
-      <Section header="Published finishes" footer="Lists found on Listhammer for this event, best record first. Not a full standings table.">
-        {e.results.map((r) => (
-          <div
-            role="button"
-            tabIndex={0}
-            className="row pressable meta-list-row"
-            key={r.player + r.faction}
-            style={{ '--accent': factionColor(r.faction) } as CSSProperties}
-            onClick={() =>
-              nav.push({
-                key: 'meta:f:' + r.faction,
-                render: () => <FactionMetaScreen data={data} faction={r.faction} />,
-              })
-            }
-          >
-            <span className={'record' + (unbeaten(r.record) ? ' perfect' : '')}>{r.record}</span>
-            <div className="row-body">
-              <div className="row-title">{r.player}</div>
-              <div className="row-sub">
-                <span style={{ color: 'var(--accent)', fontWeight: 600 }}>{r.faction}</span> · {r.detachment}
-              </div>
-            </div>
-            <span className="chevron">{Icon.chevronRight()}</span>
-          </div>
+      {e.note && <p className="meta-note">{e.note}</p>}
+      <Group title="Published finishes" footer="Lists found on Listhammer for this event, best record first. Not a full standings table.">
+        {results.map((l) => (
+          <ListRow key={l.player + l.faction} l={l} data={data} />
         ))}
-      </Section>
+      </Group>
     </Screen>
   )
 }
