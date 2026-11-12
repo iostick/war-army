@@ -1,5 +1,5 @@
 // Mis listas: listado y creación de listas de ejército.
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type CSSProperties } from 'react'
 import { factions, getIndex } from '../data/bsdata'
 import { useData } from '../data/dataStatus'
 import { rosterStore } from '../data/rosterStore'
@@ -8,6 +8,7 @@ import { createRoster } from '../engine/ops'
 import type { Roster } from '../engine/roster'
 import { Icon, Row, Screen, Section, Segmented, Sheet, Spinner } from '../ui/kit'
 import { useNav } from '../ui/nav'
+import { factionColor, shortFaction } from '../ui/faction'
 import { RosterScreen } from './RosterScreen'
 
 export function RostersScreen() {
@@ -45,24 +46,38 @@ export function RostersScreen() {
         </div>
       )}
       {rosters && rosters.length > 0 && (
-        <Section>
+        <div className="roster-cards">
           {rosters.map((r) => {
             const s = r.summary
             const over = s && s.limit > 0 && s.points > s.limit
+            const pct = s && s.limit ? Math.min(100, (s.points / s.limit) * 100) : 0
             return (
-              <Row
-                key={r.uid}
-                title={r.name}
-                sub={s ? `${s.faction} · ${s.points}/${s.limit} pts` : undefined}
-                accessory={
-                  s && (s.errors > 0 || over ? <span className="pill red">{Icon.warning(12)} {s.errors}</span> : <span className="pill green">{Icon.checkCircle(12)} Válida</span>)
-                }
-                chevron
-                onClick={() => open(r.uid)}
-              />
+              <button key={r.uid} className="roster-card" style={{ '--accent': factionColor(s?.faction) } as CSSProperties} onClick={() => open(r.uid)}>
+                <div className="roster-card-top">
+                  <span className="roster-faction">{shortFaction(s?.faction) || 'Lista'}</span>
+                  {s &&
+                    (s.errors > 0 || over ? (
+                      <span className="pill glass">
+                        {Icon.warning(12)} {s.errors} {s.errors === 1 ? 'aviso' : 'avisos'}
+                      </span>
+                    ) : (
+                      <span className="pill glass">{Icon.checkCircle(12)} Válida</span>
+                    ))}
+                </div>
+                <div className="roster-name">{r.name}</div>
+                {s && (
+                  <div className="roster-points">
+                    <b>{Math.round(s.points)}</b> / {s.limit} pts
+                    <div className="meter glass">
+                      <div style={{ width: `${pct}%` }} />
+                    </div>
+                  </div>
+                )}
+                <span className="roster-mark">{Icon.shield(110)}</span>
+              </button>
             )
           })}
-        </Section>
+        </div>
       )}
       {creating && (
         <NewRosterSheet

@@ -1168,3 +1168,720 @@ body {
 .keywords.kw-list {
   padding: 10px 12px;
 }
+
+/* Estratagemas (Wahapedia) */
+.strat {
+  cursor: pointer;
+}
+.strat + .strat,
+.row + .strat,
+.rule-text + .strat,
+.strat + .rule-text {
+  border-top: 1px solid var(--separator);
+}
+.strat-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 16px;
+  min-height: 44px;
+}
+.strat-cp {
+  flex: none;
+  min-width: 38px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 3px 6px;
+  border-radius: 6px;
+  color: #fff;
+  background: var(--accent, var(--tint));
+}
+.strat-body {
+  padding-top: 0;
+}
+.strat-body .legend {
+  display: block;
+  color: var(--label-3);
+  margin-bottom: 6px;
+}
+.chevron.open svg {
+  transform: rotate(90deg);
+}
+.chevron svg {
+  transition: transform 0.15s;
+}
+.kw-inline {
+  font-weight: 600;
+  font-variant: small-caps;
+  letter-spacing: 0.02em;
+  color: var(--label);
+}
+.muted-text {
+  color: var(--label-3);
+}
+.opt-desc {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  white-space: normal;
+}
+.info-button {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 14px;
+  display: inline-grid;
+  place-items: center;
+  color: var(--accent, var(--tint));
+  background: transparent;
+  border: 1.5px solid currentColor;
+  font: 700 14px/1 Georgia, serif;
+  font-style: italic;
+  cursor: pointer;
+}
+.glossary-en {
+  margin-top: 8px;
+}
+
+/* ================= Tema de juego: oscuro, tarjetas redondeadas, degradados de facción ================= */
+:root {
+  --font-display: 'Barlow Condensed', 'Arial Narrow', system-ui, sans-serif;
+  --radius: 16px;
+  --radius-sm: 12px;
+  --bg: #eceef3;
+  --cell: #ffffff;
+  --cell-press: #e6e9ef;
+  --fill: #e3e6ec;
+  --border: #dde1e8;
+  --separator: #e3e6ec;
+  --bar: rgba(236, 238, 243, 0.88);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --bg: #090b10;
+    --bg-elevated: #151922;
+    --cell: #12161e;
+    --cell-press: #1b2029;
+    --fill: #1d222c;
+    --border: #1f2530;
+    --separator: #1f2530;
+    --label-2: #9199a6;
+    --bar: rgba(9, 11, 16, 0.86);
+  }
+}
+
+:root[data-theme='dark'] {
+  --bg: #090b10;
+  --bg-elevated: #151922;
+  --cell: #12161e;
+  --cell-press: #1b2029;
+  --fill: #1d222c;
+  --border: #1f2530;
+  --separator: #1f2530;
+  --label-2: #9199a6;
+  --bar: rgba(9, 11, 16, 0.86);
+}
+
+/* Fondo con un leve resplandor del color de la facción */
+.screen {
+  background:
+    radial-gradient(120% 60% at 100% 0%, color-mix(in srgb, var(--accent) 14%, transparent), transparent 60%),
+    var(--bg);
+}
+
+/* Barra superior */
+.navbar,
+.navbar.scrolled {
+  box-shadow: none;
+  border-bottom: 1px solid var(--border);
+}
+
+.navbar-title,
+.navbar.scrolled .navbar-title {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.navbar-left .bar-button {
+  width: 36px;
+  height: 36px;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--fill);
+  color: var(--label);
+  padding: 0;
+}
+
+.navbar-right .bar-button {
+  min-width: 36px;
+  height: 36px;
+  justify-content: center;
+  border-radius: 18px;
+  background: var(--accent);
+  color: #fff;
+  padding: 0 10px;
+}
+
+.navbar-right .bar-button:disabled {
+  background: var(--fill);
+  color: var(--label-3);
+}
+
+/* Secciones: título en mayúsculas con marca de color */
+.section {
+  margin-bottom: 22px;
+}
+
+.section-header {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--label);
+  padding: 0 2px 8px;
+  align-items: center;
+}
+
+.section-header > span:first-child {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.section-header > span:first-child:not(:empty)::before {
+  content: '';
+  width: 4px;
+  height: 14px;
+  border-radius: 2px;
+  background: var(--accent);
+}
+
+.section-footer {
+  padding: 8px 2px 0;
+}
+
+/* Cada fila es una tarjeta redondeada */
+.group {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  overflow: visible;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.group > * {
+  background: var(--cell);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.row + .row::before {
+  display: none;
+}
+
+.row {
+  min-height: 52px;
+  padding: 0 14px;
+}
+
+.row-title {
+  font-weight: 600;
+}
+
+.row.pressable:active,
+button.row:active {
+  background: var(--cell-press);
+  transform: scale(0.99);
+}
+
+.row.indent {
+  margin-left: 18px;
+  padding-left: 14px;
+  border-left: 3px solid var(--accent);
+}
+
+.row.indent .row-title::before {
+  content: '';
+}
+
+.row.action {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.row.destructive {
+  color: var(--red);
+  font-weight: 600;
+}
+
+.row-icon {
+  border-radius: 9px;
+}
+
+.check {
+  color: var(--accent);
+}
+
+.row .check:not(:empty) + .row-body .row-title,
+.row:has(.check:not(:empty)) {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+}
+
+.row:has(.check:not(:empty)) {
+  background: color-mix(in srgb, var(--accent) 10%, var(--cell));
+}
+
+.strat + .strat,
+.row + .strat,
+.rule-text + .strat,
+.strat + .rule-text,
+.rule-text + .rule-text,
+.ability + .ability {
+  border-top: 1px solid var(--border);
+}
+
+.rule-text {
+  padding: 12px 14px;
+}
+
+.rule-text b,
+.ability b {
+  font-family: var(--font-display);
+  font-size: 17px;
+  letter-spacing: 0.02em;
+}
+
+/* Tarjetas de listas con degradado */
+.roster-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.roster-card {
+  position: relative;
+  overflow: hidden;
+  text-align: left;
+  color: #fff;
+  border-radius: 20px;
+  padding: 16px 16px 14px;
+  min-height: 136px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: linear-gradient(135deg, var(--accent) 0%, color-mix(in srgb, var(--accent) 55%, #05060a) 55%, color-mix(in srgb, var(--accent) 22%, #05060a) 100%);
+  box-shadow: 0 10px 30px color-mix(in srgb, var(--accent) 25%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  transition: transform 0.15s;
+}
+
+.roster-card:active {
+  transform: scale(0.98);
+}
+
+.roster-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+  z-index: 1;
+}
+
+.roster-faction {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+
+.roster-name {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.05;
+  text-transform: uppercase;
+  position: relative;
+  z-index: 1;
+}
+
+.roster-points {
+  margin-top: auto;
+  font-size: 13px;
+  opacity: 0.9;
+  position: relative;
+  z-index: 1;
+}
+
+.roster-points b {
+  font-family: var(--font-display);
+  font-size: 22px;
+}
+
+.roster-mark {
+  position: absolute;
+  right: -18px;
+  bottom: -22px;
+  opacity: 0.14;
+  pointer-events: none;
+}
+
+.pill.glass {
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+
+.meter.glass {
+  background: rgba(255, 255, 255, 0.2);
+  height: 5px;
+  margin-top: 6px;
+}
+
+.meter.glass > div {
+  background: #fff;
+}
+
+/* Cabecera de la lista con el mismo degradado */
+.points-card {
+  color: #fff;
+  border: 0;
+  border-radius: 20px;
+  padding: 16px;
+  background: linear-gradient(135deg, var(--accent) 0%, color-mix(in srgb, var(--accent) 55%, #05060a) 60%, color-mix(in srgb, var(--accent) 25%, #05060a) 100%);
+  box-shadow: 0 10px 30px color-mix(in srgb, var(--accent) 22%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+.points-value {
+  font-family: var(--font-display);
+  font-size: 40px;
+  line-height: 1;
+}
+
+.points-value small {
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 18px;
+}
+
+.points-card .meter {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.points-card .meter > div {
+  background: #fff;
+}
+
+.points-card .meter.over > div {
+  background: #ff8a8f;
+}
+
+.points-card .chip,
+.points-card .chip.accent {
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+}
+
+.points-card .chip.red {
+  background: rgba(255, 80, 90, 0.35);
+}
+
+.points-card .pill.green,
+.points-card .pill.red {
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+}
+
+/* Pestañas internas tipo píldora */
+.tabs-inline {
+  background: var(--cell);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 4px;
+  gap: 2px;
+}
+
+.tabs-inline button {
+  flex: 1;
+  border-radius: 999px;
+  background: transparent;
+  font-family: var(--font-display);
+  font-size: 15px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 7px 12px;
+}
+
+.tabs-inline button.on {
+  background: var(--accent);
+  color: #fff;
+}
+
+.segmented {
+  border-radius: 999px;
+  padding: 3px;
+}
+
+.segmented button {
+  border-radius: 999px;
+}
+
+/* Barra de pestañas flotante */
+.tabbar {
+  left: 12px;
+  right: 12px;
+  bottom: calc(10px + var(--safe-bottom));
+  padding: 6px;
+  border-radius: 24px;
+  border: 1px solid var(--border);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  justify-content: space-between;
+}
+
+.tab {
+  flex: 1;
+  padding: 6px 0 5px;
+  border-radius: 18px;
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  min-width: 0;
+}
+
+.tab.on {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  color: var(--accent);
+}
+
+.screen {
+  padding-bottom: calc(110px + var(--safe-bottom));
+}
+
+@media (min-width: 900px) {
+  .sidebar h1 {
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-size: 26px;
+  }
+  .side-item {
+    border-radius: 12px;
+    padding: 10px 12px;
+    font-weight: 600;
+  }
+  .screen {
+    padding-bottom: 40px;
+  }
+}
+
+/* Botones, hojas y datos */
+.button-filled {
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 60%, #05060a));
+  font-family: var(--font-display);
+  font-size: 18px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.sheet {
+  border-radius: 22px 22px 0 0;
+}
+
+.sheet-header .title {
+  font-family: var(--font-display);
+  font-size: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+@media (min-width: 700px) {
+  .sheet {
+    border-radius: 22px;
+  }
+}
+
+.stats {
+  gap: 8px;
+}
+
+.stat {
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--accent) 10%, var(--fill));
+}
+
+.stat b {
+  font-family: var(--font-display);
+  font-size: 24px;
+}
+
+.search {
+  border-radius: 999px;
+  height: 40px;
+  padding: 0 14px;
+  background: var(--cell);
+  border: 1px solid var(--border);
+}
+
+.chip,
+.kw-chip {
+  border-radius: 999px;
+}
+
+.stepper {
+  border-radius: 999px;
+}
+
+.thumb {
+  border-radius: 10px;
+}
+
+.strat-cp {
+  border-radius: 999px;
+  font-family: var(--font-display);
+  font-size: 14px;
+}
+
+.score-card {
+  border-radius: 20px;
+}
+
+/* Fotos de las unidades en la lista y en su ficha */
+.unit-row {
+  padding-left: 8px;
+}
+
+.unit-thumb {
+  width: 54px;
+  height: 54px;
+  margin: 6px 0;
+  border-radius: 12px;
+  object-fit: cover;
+  flex: none;
+  background: var(--fill);
+}
+
+.empty-thumb {
+  display: grid;
+  place-items: center;
+  color: color-mix(in srgb, var(--accent) 80%, var(--label-2));
+  background: color-mix(in srgb, var(--accent) 12%, var(--fill));
+  border: 1px dashed color-mix(in srgb, var(--accent) 45%, transparent);
+  cursor: pointer;
+}
+
+.row.indent.unit-row {
+  padding-left: 10px;
+}
+
+.dot.inline {
+  display: inline-block;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+.unit-hero {
+  margin: 0 0 22px;
+  border-radius: 20px;
+  overflow: hidden;
+  background: var(--cell);
+  border: 1px solid var(--border);
+  position: relative;
+}
+
+.unit-hero-photo {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  max-height: 420px;
+  background: var(--fill);
+}
+
+.unit-hero-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.unit-hero-photo.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  aspect-ratio: 16 / 9;
+  color: color-mix(in srgb, var(--accent) 80%, var(--label));
+  background:
+    radial-gradient(80% 90% at 50% 0%, color-mix(in srgb, var(--accent) 28%, transparent), transparent 70%),
+    var(--fill);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.unit-hero-dots {
+  position: absolute;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-top: -22px;
+}
+
+.unit-hero-dots button {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.45);
+}
+
+.unit-hero-dots button.on {
+  background: #fff;
+}
+
+.unit-hero-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+}
+
+.unit-hero-info {
+  flex: 1;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.unit-hero-info span {
+  font-size: 12.5px;
+  color: var(--label-2);
+}
+
+.unit-hero-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  flex: none;
+}

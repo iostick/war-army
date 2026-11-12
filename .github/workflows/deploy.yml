@@ -4,6 +4,9 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  # Cada día se vuelven a descargar las estratagemas de Wahapedia
+  schedule:
+    - cron: '17 5 * * *'
 
 permissions:
   contents: read
@@ -28,6 +31,16 @@ jobs:
         run: |
           git clone --depth 1 https://github.com/BSData/wh40k-11e.git /tmp/wh40k-11e
           BSDATA_DIR=/tmp/wh40k-11e npm test
+      - name: Estratagemas y reglas de destacamento de Wahapedia
+        run: |
+          mkdir -p public/wahapedia
+          for f in Factions Stratagems Detachment_abilities Last_update; do
+            curl -fsSL --retry 3 --retry-delay 5 -A "Mozilla/5.0 (war-army personal app)" \
+              -o "public/wahapedia/$f.csv" "https://wahapedia.ru/wh40k11ed/$f.csv" \
+              || { echo "::warning::No se pudo descargar $f.csv de Wahapedia"; rm -f "public/wahapedia/$f.csv"; }
+          done
+          wc -l public/wahapedia/*.csv || true
+          head -c 300 public/wahapedia/Stratagems.csv || true
       - run: npm run build
       - uses: actions/upload-pages-artifact@v3
         with:

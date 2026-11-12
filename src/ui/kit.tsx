@@ -93,6 +93,12 @@ export const Icon = {
       <path d="M12 3v12M7.5 7.5 12 3l4.5 4.5M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7" />
     </svg>
   ),
+  camera: (s = 20) => (
+    <svg width={s} height={s} viewBox="0 0 24 24" {...P} strokeWidth={1.8}>
+      <path d="M4 8.5A2.5 2.5 0 0 1 6.5 6h1.2l1.3-2h6l1.3 2h1.2A2.5 2.5 0 0 1 20 8.5v8a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 16.5z" />
+      <circle cx="12" cy="12.5" r="3.5" />
+    </svg>
+  ),
   shield: (s = 56) => (
     <svg width={s} height={s} viewBox="0 0 24 24" {...P} strokeWidth={1.4}>
       <path d="M12 3 4.5 6v5.5c0 4.5 3.1 8.3 7.5 9.5 4.4-1.2 7.5-5 7.5-9.5V6z" />

@@ -8,6 +8,9 @@ import { CORE_STRATAGEMS } from '../data/coreRules'
 import { Icon, Row, Screen, Section, Sheet, Stepper } from '../ui/kit'
 import { useNav } from '../ui/nav'
 import { RosterScreen } from './RosterScreen'
+import { useRoster } from '../data/session'
+import { detachments } from '../engine/rules11'
+import { DetachmentStratagems, WahapediaCredit } from '../ui/wahapediaUi'
 
 export function GamesScreen() {
   const list = useTable('games', () => games.all().then((l) => l.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))))
@@ -151,7 +154,7 @@ export function GameScreen({ id }: { id: string }) {
         />
       </Section>
       <Section>
-        <Row title="Estratagemas generales" icon={Icon.list(16)} chevron onClick={() => setStrats(true)} />
+        <Row title="Estratagemas" icon={Icon.list(16)} chevron onClick={() => setStrats(true)} />
         {g.rosterUid && <Row title="Ver mi lista" icon={Icon.shield(16)} chevron onClick={() => nav.push({ key: 'roster:' + g.rosterUid, render: () => <RosterScreen uid={g.rosterUid!} /> })} />}
       </Section>
       <Section header="Notas">
@@ -176,7 +179,8 @@ export function GameScreen({ id }: { id: string }) {
         />
       </Section>
       {strats && (
-        <Sheet title="Estratagemas generales" onClose={() => setStrats(false)} left={<span />} right={<button className="bar-button bold" onClick={() => setStrats(false)}>Cerrar</button>}>
+        <Sheet title="Estratagemas" onClose={() => setStrats(false)} left={<span />} right={<button className="bar-button bold" onClick={() => setStrats(false)}>Cerrar</button>}>
+          {g.rosterUid && <RosterStratagems rosterUid={g.rosterUid} />}
           <StratagemList />
         </Sheet>
       )}
@@ -186,11 +190,11 @@ export function GameScreen({ id }: { id: string }) {
 
 export function StratagemList() {
   return (
-    <Section footer="Resumen propio de las estratagemas del reglamento de la 11ª (sección 15).">
+    <Section header="Estratagemas básicas" footer="Resumen propio del reglamento de la 11ª en español (sección 15). PM = puntos de mando.">
       {CORE_STRATAGEMS.map((s) => (
         <div className="rule-text" key={s.name}>
           <b>
-            {s.name} · {s.cp} <span style={{ color: 'var(--label-3)', fontWeight: 500 }}>({s.ref})</span>
+            {s.name} · {s.cp} <span style={{ color: 'var(--label-3)', fontWeight: 500 }}>({s.en} · {s.ref})</span>
           </b>
           <strong style={{ color: 'var(--label)' }}>Cuándo:</strong> {s.when}
           {'\n'}
@@ -206,5 +210,19 @@ export function StratagemList() {
         </div>
       ))}
     </Section>
+  )
+}
+
+function RosterStratagems({ rosterUid }: { rosterUid: string }) {
+  const { ev } = useRoster(rosterUid)
+  if (!ev) return null
+  return (
+    <>
+      {detachments(ev).map((d) => (
+        <Section key={d.inst.sel.uid} header={`Destacamento · ${d.name}`} footer={<WahapediaCredit />}>
+          <DetachmentStratagems detachment={d.name} />
+        </Section>
+      ))}
+    </>
   )
 }

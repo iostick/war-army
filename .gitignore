@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Datos de Wahapedia: se descargan al publicar, no se guardan en el repositorio
+public/wahapedia/

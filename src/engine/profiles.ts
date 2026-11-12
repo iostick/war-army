@@ -80,3 +80,18 @@ export function datasheet(index: DataIndex, ev: Evaluator, unit: SelInst): Datas
     .filter((n): n is string => Boolean(n) && !/^(Configuration|Unit)$/.test(n!))
   return { profiles, rules: [...rules].map(([name, description]) => ({ name, description })), keywords }
 }
+
+/** Texto de una opción (mejora, equipo con habilidad…) para leerlo antes de elegirla */
+export function optionText(index: DataIndex, node: { target: Raw; link?: Raw }): string {
+  const parts: string[] = []
+  for (const src of [node.target, node.link]) {
+    for (const p of profilesOf(index, src)) {
+      const typeName: string = p.typeName ?? index.byId.get(p.typeId)?.name ?? ''
+      if (!/abilit/i.test(typeName)) continue
+      const text = (p.characteristics ?? []).map((c: Raw) => String(c.$text ?? c.value ?? '')).join('\n').trim()
+      if (text) parts.push(p.name && p.name !== node.target?.name ? `**${p.name}**\n${text}` : text)
+    }
+    for (const r of rulesOf(index, src)) if (r.description) parts.push(`**${r.name}**\n${r.description}`)
+  }
+  return [...new Set(parts)].join('\n\n')
+}

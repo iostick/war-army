@@ -6,6 +6,7 @@ import { addSelection, removeSelection } from '../engine/ops'
 import { rulesOf } from '../engine/profiles'
 import { coreLimits, detachments, DISPOSITIONS } from '../engine/rules11'
 import { RichText } from '../ui/glossaryUi'
+import { DetachmentStratagems } from '../ui/wahapediaUi'
 import { Icon, Row, Screen, Section, Spinner } from '../ui/kit'
 import { factionColor } from '../ui/faction'
 
@@ -104,6 +105,7 @@ export function DetachmentScreen(props: { rosterUid: string; selUid: string }) {
                   </button>
                 }
               />
+              {open === o.node.key && <DetachmentStratagems detachment={o.state.name} />}
               {open === o.node.key &&
                 (rules.length ? (
                   rules.map((r: any) => (

@@ -11,6 +11,8 @@ import { addSelection, PTS } from '../engine/ops'
 import { profilesOf, rulesOf } from '../engine/profiles'
 import { coreLimits, detachments } from '../engine/rules11'
 import { factionColor, shortFaction } from '../ui/faction'
+import { DetachmentStratagems, WahapediaCredit } from '../ui/wahapediaUi'
+import { PhotoPicker, type UnitRef } from '../ui/photoUi'
 import { RichText } from '../ui/glossaryUi'
 import { Icon, pts, Row, Screen, Search, Section, Sheet, Spinner } from '../ui/kit'
 import { useNav } from '../ui/nav'
@@ -91,6 +93,7 @@ export function RosterScreen(props: { uid: string }) {
         sub={[unitSummary(ev, s), item ? `Tienes ${item.owned}/${inList}` : ''].filter(Boolean).join(' · ')}
         missing={!!item && item.owned < inList}
         photo={item?.photos[0]}
+        unit={{ catalogueId: s.force.force.catalogueId, entryId: s.node.id, name: s.node.name, faction: catName ?? '' }}
         issue={unitIssue(s)}
         detail={p ? pts(p) : ''}
         indent={indent}
@@ -235,20 +238,28 @@ export function RosterScreen(props: { uid: string }) {
   )
 }
 
-function UnitRow(props: { title: string; sub: string; detail: string; photo?: string; issue: boolean; missing: boolean; indent: boolean; onClick: () => void }) {
+function UnitRow(props: { title: string; sub: string; detail: string; photo?: string; unit: UnitRef; issue: boolean; missing: boolean; indent: boolean; onClick: () => void }) {
   const url = usePhotoUrl(props.photo)
   return (
     <Row
-      title={props.title}
-      sub={props.missing ? <span style={{ color: 'var(--orange)' }}>{props.sub}</span> : props.sub}
-      leading={
+      title={
         <>
-          {props.issue ? <span className="dot" /> : !props.indent && <span className="stripe" />}
-          {url && <img className="thumb" src={url} alt="" />}
+          {props.issue && <span className="dot inline" />}
+          {props.title}
         </>
       }
+      sub={props.missing ? <span style={{ color: 'var(--orange)' }}>{props.sub}</span> : props.sub}
+      leading={
+        url ? (
+          <img className="unit-thumb" src={url} alt="" />
+        ) : (
+          <PhotoPicker unit={props.unit} className="unit-thumb empty-thumb">
+            {Icon.camera(18)}
+          </PhotoPicker>
+        )
+      }
       detail={props.detail}
-      className={props.indent ? 'indent' : ''}
+      className={'unit-row' + (props.indent ? ' indent' : '')}
       chevron
       onClick={props.onClick}
     />
@@ -379,14 +390,11 @@ function ArmyRules({ ev }: { ev: Evaluator }) {
           ))}
         </Section>
       )}
-      <Section footer="BSData no publica las estratagemas de cada destacamento (son texto de Games Workshop). Las generales están en la pestaña Reglas.">
-        <a className="row action" href="https://wahapedia.ru/wh40k11ed/" target="_blank" rel="noreferrer">
-          <div className="row-body">
-            <div className="row-title">Ver estratagemas del destacamento en Wahapedia</div>
-          </div>
-          <span className="chevron">{Icon.chevronRight()}</span>
-        </a>
-      </Section>
+      {dets.map((d) => (
+        <Section key={'strat:' + d.inst.sel.uid} header={`Estratagemas · ${d.name}`} footer={<WahapediaCredit />}>
+          <DetachmentStratagems detachment={d.name} />
+        </Section>
+      ))}
     </>
   )
 }

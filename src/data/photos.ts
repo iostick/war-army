@@ -1,7 +1,7 @@
 // Fotos de miniaturas: se reducen (máx. 1600 px, JPEG) antes de guardarlas en el dispositivo.
 import { useEffect, useState } from 'react'
 import { uid } from '../engine/roster'
-import { photos } from './db'
+import { collection, PAINT_STATUS, photos } from './db'
 
 export async function savePhoto(file: File): Promise<string> {
   const blob = await shrink(file, 1600, 0.85)
@@ -44,4 +44,25 @@ export function usePhotoUrl(id: string | undefined): string | undefined {
     }
   }, [id])
   return url
+}
+
+/** Añade fotos a una unidad (las guarda en su ficha de colección, creándola si hace falta) */
+export async function addUnitPhotos(u: { catalogueId: string; entryId: string; name: string; faction: string }, files: File[]): Promise<void> {
+  if (!files.length) return
+  const ids: string[] = []
+  for (const f of files) ids.push(await savePhoto(f))
+  const key = `${u.catalogueId}:${u.entryId}`
+  const item = await collection.get(key)
+  await collection.put({
+    key,
+    catalogueId: u.catalogueId,
+    entryId: u.entryId,
+    name: item?.name ?? u.name,
+    faction: item?.faction ?? u.faction,
+    owned: Math.max(1, item?.owned ?? 0),
+    status: item?.status ?? PAINT_STATUS[0],
+    notes: item?.notes ?? '',
+    photos: [...(item?.photos ?? []), ...ids],
+    updatedAt: new Date().toISOString(),
+  })
 }
