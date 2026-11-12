@@ -28,7 +28,7 @@ class RosterSession {
     this.loading ??= (async () => {
       try {
         const roster = await rosterStore.get(this.uid)
-        if (!roster) throw new Error('No se encontró la lista')
+        if (!roster) throw new Error('List not found')
         const index = await getIndex(roster.forces[0].catalogueId)
         this.set({ roster, index })
       } catch (e) {

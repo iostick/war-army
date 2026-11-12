@@ -16,15 +16,15 @@ export function RulesScreen() {
   const g = useGlossary()
   const entries = [...(g?.values() ?? [])].filter((e) => e.name.toLowerCase().includes(q.toLowerCase())).sort((a, b) => a.name.localeCompare(b.name))
   return (
-    <Screen title="Reglas">
+    <Screen title="Rules">
       <div className="tabs-inline">
         {(
           [
-            ['book', 'Reglamento'],
-            ['strat', 'Estratagemas'],
-            ['muster', 'Crear ejército'],
-            ['round', 'Ronda de batalla'],
-            ['glossary', 'Habilidades'],
+            ['book', 'Rulebook'],
+            ['strat', 'Stratagems'],
+            ['muster', 'Muster armies'],
+            ['round', 'Battle round'],
+            ['glossary', 'Abilities'],
           ] as [Tab, string][]
         ).map(([t, l]) => (
           <button key={t} className={tab === t ? 'on' : ''} onClick={() => setTab(t)}>
@@ -35,7 +35,7 @@ export function RulesScreen() {
       {tab === 'book' && <RulebookList />}
       {tab === 'strat' && <StratagemList />}
       {tab === 'muster' && (
-        <Section footer="Lo que la app comprueba al validar tus listas.">
+        <Section footer="What the app checks when validating your lists.">
           {MUSTER_RULES.map((r) => (
             <div className="rule-text" key={r.title}>
               <b>{r.title}</b>
@@ -56,8 +56,8 @@ export function RulesScreen() {
       )}
       {tab === 'glossary' && (
         <>
-          <Search value={q} onChange={setQ} placeholder="Buscar habilidad (p. ej. Lethal Hits)" />
-          <Section footer="Texto de las reglas universales según los datos de BSData para la 11ª.">
+          <Search value={q} onChange={setQ} placeholder="Search ability (e.g. Lethal Hits)" />
+          <Section footer="Universal rules text from the BSData 11th edition data.">
             {entries.map((e) =>
               open === e.name ? (
                 <div className="rule-text" key={e.name} onClick={() => setOpen(undefined)}>

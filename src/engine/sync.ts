@@ -76,7 +76,7 @@ export class BSDataSync {
     const res = await this.fetchFn(`${this.apiBase}/repos/${REPO}/commits/${BRANCH}`, {
       headers: { Accept: 'application/vnd.github+json' },
     })
-    if (!res.ok) throw new Error(`GitHub respondió ${res.status} al comprobar actualizaciones`)
+    if (!res.ok) throw new Error(`GitHub returned ${res.status} while checking for updates`)
     const j = await res.json()
     return { sha: j.sha, date: j.commit?.committer?.date ?? j.commit?.author?.date ?? '' }
   }
@@ -85,7 +85,7 @@ export class BSDataSync {
     const res = await this.fetchFn(`${this.apiBase}/repos/${REPO}/git/trees/${commitSha}`, {
       headers: { Accept: 'application/vnd.github+json' },
     })
-    if (!res.ok) throw new Error(`GitHub respondió ${res.status} al listar archivos`)
+    if (!res.ok) throw new Error(`GitHub returned ${res.status} while listing files`)
     const j = await res.json()
     return (j.tree as any[])
       .filter((t) => t.type === 'blob' && t.path.endsWith('.json'))
@@ -95,7 +95,7 @@ export class BSDataSync {
   async downloadFile(commitSha: string, path: string): Promise<unknown> {
     const url = `${this.rawBase}/${REPO}/${commitSha}/${encodeURIComponent(path)}`
     const res = await this.fetchFn(url)
-    if (!res.ok) throw new Error(`No se pudo descargar ${path} (${res.status})`)
+    if (!res.ok) throw new Error(`Couldn't download ${path} (${res.status})`)
     return res.json()
   }
 
@@ -161,7 +161,7 @@ export class BSDataSync {
   /** Archivos necesarios para jugar con un catálogo: sistema de juego + catálogo + catálogos enlazados */
   async loadForCatalogue(catalogueId: string): Promise<{ gameSystem: unknown; catalogues: unknown[] }> {
     const meta = await this.store.getMeta()
-    if (!meta) throw new Error('Todavía no hay datos descargados de BSData')
+    if (!meta) throw new Error('No BSData data downloaded yet')
     const byId = new Map(meta.catalogues.map((c) => [c.id, c]))
     const needed = new Set<string>()
     const visit = (id: string) => {
@@ -173,7 +173,7 @@ export class BSDataSync {
     }
     visit(catalogueId)
     const gs = await this.store.getFile(GAME_SYSTEM_FILE)
-    if (!gs) throw new Error('Falta el sistema de juego de BSData')
+    if (!gs) throw new Error('The BSData game system is missing')
     const catalogues: unknown[] = []
     for (const id of needed) {
       const f = await this.store.getFile(byId.get(id)!.path)

@@ -38,10 +38,10 @@ export function DataProvider(props: { children: ReactNode; onUpdated?: (msg: str
       setMeta(m)
       if (r.updated) {
         clearIndexCache()
-        const msg = `Datos actualizados: ${r.changedFiles.length} archivo${r.changedFiles.length === 1 ? '' : 's'}`
+        const msg = `Data updated: ${r.changedFiles.length} file${r.changedFiles.length === 1 ? '' : 's'}`
         setLastResult(msg)
         if (hadData) onUpdated?.(msg)
-      } else setLastResult('Ya tienes la última versión')
+      } else setLastResult('You already have the latest version')
     } catch (e) {
       setError((e as Error).message)
     } finally {

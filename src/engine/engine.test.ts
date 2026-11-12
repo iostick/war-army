@@ -76,7 +76,7 @@ describe.skipIf(!DATA)('motor BSData (11ª edición)', () => {
     for (let i = 0; i < 3; i++) r = addByName(r, r.forces[0].uid, 'Monolith').roster
     const issues = new Evaluator(index, r).validate()
     console.log(issues.map((i) => i.message))
-    expect(issues.some((i) => /máximo 1000 pts/.test(i.message))).toBe(true)
+    expect(issues.some((i) => /maximum 1000 pts/.test(i.message))).toBe(true)
     expect(issues.some((i) => /Detachment/.test(i.message))).toBe(true)
     expect(issues.some((i) => /Character/.test(i.message))).toBe(true)
   })
@@ -130,10 +130,10 @@ describe.skipIf(!DATA)('motor BSData (11ª edición)', () => {
     for (const u of ['Imotekh the Stormlord', 'Imotekh the Stormlord', 'Lychguard', 'Lychguard', 'Lychguard', 'Lychguard']) r = addByName(r, r.forces[0].uid, u).roster
     for (let i = 0; i < 6; i++) r = addByName(r, r.forces[0].uid, 'Necron Warriors').roster
     const msgs = new Evaluator(index, r).validate().map((i) => i.message)
-    expect(msgs.some((m) => /Imotekh.*máximo 1/.test(m))).toBe(true)
-    expect(msgs.some((m) => /Lychguard.*máximo 3/.test(m))).toBe(true)
-    expect(msgs.some((m) => /Necron Warriors.*máximo/.test(m))).toBe(false) // Battleline: hasta 6
-    expect(msgs.some((m) => /etiqueta «Dynasty»/.test(m))).toBe(true)
+    expect(msgs.some((m) => /Imotekh.*maximum 1/.test(m))).toBe(true)
+    expect(msgs.some((m) => /Lychguard.*maximum 3/.test(m))).toBe(true)
+    expect(msgs.some((m) => /Necron Warriors.*maximum/.test(m))).toBe(false) // Battleline: hasta 6
+    expect(msgs.some((m) => /tag “Dynasty”/.test(m))).toBe(true)
     expect(msgs.some((m) => /Detachment Points/.test(m))).toBe(true) // 3 + 1 > 3
     expect(msgs.some((m) => /Warlord/.test(m))).toBe(true)
   })
@@ -145,7 +145,7 @@ describe.skipIf(!DATA)('motor BSData (11ª edición)', () => {
     const ov = findSel(r, 'Overlord')
     const tm = findSel(r, 'Technomancer')
     const nw = findSel(r, 'Necron Warriors')
-    expect(ev.validate().some((i) => /Technomancer debe apoyar/.test(i.message))).toBe(true)
+    expect(ev.validate().some((i) => /Technomancer must support/.test(i.message))).toBe(true)
     const tmDef = ev.associationDefs(tm)[0]
     expect(ev.associationCandidates(tm, tmDef).map((c) => c.node.name)).toEqual(['Necron Warriors'])
     r = attach(r, ov.sel.uid, ev.associationDefs(ov)[0].id, nw.sel.uid)
@@ -156,6 +156,6 @@ describe.skipIf(!DATA)('motor BSData (11ª edición)', () => {
     // Un Overlord no puede liderar Lokhust Heavy Destroyers
     const lhd = findSel(r, 'Lokhust Heavy Destroyers')
     r = attach(r, ov.sel.uid, ev.associationDefs(ov)[0].id, lhd.sel.uid)
-    expect(new Evaluator(index, r).validate().some((i) => /Overlord no puede unirse/.test(i.message))).toBe(true)
+    expect(new Evaluator(index, r).validate().some((i) => /Overlord can.t join/.test(i.message))).toBe(true)
   })
 })

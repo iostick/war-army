@@ -13,11 +13,11 @@ import { NavStack } from './ui/nav'
 type Tab = 'lists' | 'collection' | 'game' | 'rules' | 'settings'
 
 const TABS: { id: Tab; label: string; icon: () => ReactNode }[] = [
-  { id: 'lists', label: 'Listas', icon: () => Icon.list(24) },
-  { id: 'collection', label: 'Colección', icon: () => Icon.box(24) },
-  { id: 'game', label: 'Partidas', icon: () => Icon.dice(24) },
-  { id: 'rules', label: 'Reglas', icon: () => Icon.shield(24) },
-  { id: 'settings', label: 'Ajustes', icon: () => Icon.gear(24) },
+  { id: 'lists', label: 'Lists', icon: () => Icon.list(24) },
+  { id: 'collection', label: 'Collection', icon: () => Icon.box(24) },
+  { id: 'game', label: 'Games', icon: () => Icon.dice(24) },
+  { id: 'rules', label: 'Rules', icon: () => Icon.shield(24) },
+  { id: 'settings', label: 'Settings', icon: () => Icon.gear(24) },
 ]
 
 type Theme = 'system' | 'light' | 'dark'
@@ -105,8 +105,8 @@ function SettingsScreen({ flash }: { flash: (m: string) => void }) {
   const { meta, syncing, progress, error, lastResult, checkNow } = useData()
   const [theme, setTheme] = useState<Theme>(loadTheme())
   const file = useRef<HTMLInputElement>(null)
-  const date = meta?.commitDate ? new Date(meta.commitDate).toLocaleString('es-ES', { dateStyle: 'medium', timeStyle: 'short' }) : '—'
-  const checked = meta?.checkedAt ? new Date(meta.checkedAt).toLocaleString('es-ES', { dateStyle: 'medium', timeStyle: 'short' }) : '—'
+  const date = meta?.commitDate ? new Date(meta.commitDate).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' }) : '—'
+  const checked = meta?.checkedAt ? new Date(meta.checkedAt).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' }) : '—'
   const pickTheme = (t: Theme) => {
     setTheme(t)
     applyTheme(t)
@@ -117,35 +117,35 @@ function SettingsScreen({ flash }: { flash: (m: string) => void }) {
     }
   }
   return (
-    <Screen title="Ajustes">
+    <Screen title="Settings">
       <CloudSection flash={flash} />
-      <Section header="Apariencia">
+      <Section header="Appearance">
         {(
           [
-            ['system', 'Automático (como el dispositivo)'],
-            ['light', 'Claro'],
-            ['dark', 'Oscuro'],
+            ['system', 'Automatic (match device)'],
+            ['light', 'Light'],
+            ['dark', 'Dark'],
           ] as [Theme, string][]
         ).map(([t, l]) => (
           <Row key={t} title={l} checked={theme === t} onClick={() => pickTheme(t)} />
         ))}
       </Section>
-      <Section header="Datos de juego" footer={error ? `Error: ${error}` : lastResult}>
-        <Row title="Fuente" detail="BSData · wh40k-11e" />
-        <Row title="Versión" detail={meta?.commitSha ? meta.commitSha.slice(0, 7) : '—'} />
-        <Row title="Publicada" detail={date} />
-        <Row title="Última comprobación" detail={checked} />
+      <Section header="Game data" footer={error ? `Error: ${error}` : lastResult}>
+        <Row title="Source" detail="BSData · wh40k-11e" />
+        <Row title="Version" detail={meta?.commitSha ? meta.commitSha.slice(0, 7) : '—'} />
+        <Row title="Published" detail={date} />
+        <Row title="Last checked" detail={checked} />
         <Row
-          title={syncing ? (progress?.phase === 'downloading' ? `Descargando ${progress.done}/${progress.total}…` : 'Comprobando…') : 'Buscar actualizaciones'}
+          title={syncing ? (progress?.phase === 'downloading' ? `Downloading ${progress.done}/${progress.total}…` : 'Checking…') : 'Check for updates'}
           className="action"
           icon={Icon.refresh(16)}
           iconBg="var(--green)"
           onClick={syncing ? undefined : checkNow}
         />
       </Section>
-      <Section header="Copia de seguridad" footer="Guarda listas, colección con fotos y partidas en un archivo. Ábrelo en otro dispositivo (AirDrop, iCloud Drive) con «Importar» para tener lo mismo.">
+      <Section header="Backup" footer="Saves lists, collection with photos and games to a file. Open it on another device (AirDrop, iCloud Drive) with “Import” to get the same data.">
         <Row
-          title="Exportar copia"
+          title="Export backup"
           className="action"
           icon={Icon.share(16)}
           onClick={async () => {
@@ -163,7 +163,7 @@ function SettingsScreen({ flash }: { flash: (m: string) => void }) {
             a.click()
           }}
         />
-        <Row title="Importar copia" className="action" icon={Icon.copy(16)} onClick={() => file.current?.click()} />
+        <Row title="Import backup" className="action" icon={Icon.copy(16)} onClick={() => file.current?.click()} />
         <input
           ref={file}
           type="file"
@@ -181,8 +181,8 @@ function SettingsScreen({ flash }: { flash: (m: string) => void }) {
           }}
         />
       </Section>
-      <Section footer="Los datos los mantiene la comunidad de BSData y no están avalados por Games Workshop. App de uso personal.">
-        <Row title="War Army" detail="11ª edición" />
+      <Section footer="Data is maintained by the BSData community and is not endorsed by Games Workshop. Personal-use app.">
+        <Row title="War Army" detail="11th edition" />
       </Section>
     </Screen>
   )
@@ -206,26 +206,26 @@ function CloudSection({ flash }: { flash: (m: string) => void }) {
   }
   const user = cloud.session?.user
   if (user) {
-    const last = cloud.lastSync ? new Date(cloud.lastSync).toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' }) : '—'
+    const last = cloud.lastSync ? new Date(cloud.lastSync).toLocaleString('en-GB', { dateStyle: 'short', timeStyle: 'short' }) : '—'
     return (
-      <Section header="Sincronización" footer={cloud.error ? `Error: ${cloud.error}` : 'Listas, colección con fotos y partidas se sincronizan solas entre tus dispositivos.'}>
-        <Row title="Cuenta" detail={user.email} />
-        <Row title="Última sincronización" detail={cloud.syncing ? 'Sincronizando…' : last} />
-        <Row title="Sincronizar ahora" className="action" icon={Icon.refresh(16)} iconBg="var(--green)" onClick={cloud.syncing ? undefined : () => void syncNow()} />
-        <Row title="Cerrar sesión" className="destructive" onClick={() => void signOut()} />
+      <Section header="Sync" footer={cloud.error ? `Error: ${cloud.error}` : 'Lists, collection with photos and games sync automatically between your devices.'}>
+        <Row title="Account" detail={user.email} />
+        <Row title="Last sync" detail={cloud.syncing ? 'Syncing…' : last} />
+        <Row title="Sync now" className="action" icon={Icon.refresh(16)} iconBg="var(--green)" onClick={cloud.syncing ? undefined : () => void syncNow()} />
+        <Row title="Sign out" className="destructive" onClick={() => void signOut()} />
       </Section>
     )
   }
   return (
-    <Section header="Sincronización" footer="Entra con la misma cuenta en el iPhone, el iPad y el Mac para tener las mismas listas, colección, fotos y partidas. La primera vez pulsa «Crear cuenta» y confirma el email.">
+    <Section header="Sync" footer="Sign in with the same account on your iPhone, iPad and Mac to share lists, collection, photos and games. The first time, tap “Create account” and confirm the email.">
       <div className="row">
         <input className="text-input" type="email" autoComplete="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
       </div>
       <div className="row">
-        <input className="text-input" type="password" autoComplete="current-password" placeholder="Contraseña" value={password} onChange={(e) => setPassword(e.target.value)} />
+        <input className="text-input" type="password" autoComplete="current-password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
       </div>
-      <Row title={busy ? 'Un momento…' : 'Entrar'} className={'action' + (busy || !email || !password ? ' disabled' : '')} onClick={() => run(() => signIn(email.trim(), password))} />
-      <Row title="Crear cuenta" className={'action' + (busy || !email || !password ? ' disabled' : '')} onClick={() => run(() => signUp(email.trim(), password))} />
+      <Row title={busy ? 'One moment…' : 'Sign in'} className={'action' + (busy || !email || !password ? ' disabled' : '')} onClick={() => run(() => signIn(email.trim(), password))} />
+      <Row title="Create account" className={'action' + (busy || !email || !password ? ' disabled' : '')} onClick={() => run(() => signUp(email.trim(), password))} />
     </Section>
   )
 }
@@ -237,16 +237,16 @@ function FirstDownload({ progress, error }: { progress?: { done: number; total: 
       <div className="big-icon" style={{ color: 'var(--tint)' }}>
         {Icon.shield(64)}
       </div>
-      <h2>Preparando War Army</h2>
+      <h2>Preparing War Army</h2>
       {error ? (
-        <p style={{ color: 'var(--red)' }}>No se pudieron descargar los datos de BSData: {error}. Comprueba la conexión y vuelve a abrir la app.</p>
+        <p style={{ color: 'var(--red)' }}>Couldn't download the BSData data: {error}. Check your connection and reopen the app.</p>
       ) : (
         <>
-          <p>Descargando los datos de la 11ª edición desde BSData. Solo ocurre la primera vez; después funciona sin conexión.</p>
+          <p>Downloading 11th edition data from BSData. This only happens the first time; after that it works offline.</p>
           <div className="meter" style={{ margin: '20px 0 8px' }}>
             <div style={{ width: `${pct}%` }} />
           </div>
-          <p style={{ fontSize: 13 }}>{progress?.phase === 'downloading' ? `${progress.done} de ${progress.total} archivos` : 'Conectando…'}</p>
+          <p style={{ fontSize: 13 }}>{progress?.phase === 'downloading' ? `${progress.done} of ${progress.total} files` : 'Connecting…'}</p>
           {!progress && <Spinner />}
         </>
       )}

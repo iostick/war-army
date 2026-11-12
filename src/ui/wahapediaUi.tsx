@@ -3,18 +3,9 @@ import { useState, type ReactNode } from 'react'
 import { phaseEs, stratTypeEs, turnEs, useWahapedia, stratagemsFor, detachmentAbilitiesFor, type WStratagem } from '../data/wahapedia'
 import { Icon } from './kit'
 
-const LABELS: [RegExp, string][] = [
-  [/\bWHEN:/g, 'CUÁNDO:'],
-  [/\bTARGET:/g, 'OBJETIVO:'],
-  [/\bEFFECT:/g, 'EFECTO:'],
-  [/\bRESTRICTIONS?:/g, 'RESTRICCIONES:'],
-]
-
 /** Muestra HTML de Wahapedia de forma segura: solo texto, negritas, cursivas, saltos y listas. */
 export function HtmlText({ html }: { html: string }) {
-  let src = html
-  for (const [re, es] of LABELS) src = src.replace(re, es)
-  const doc = new DOMParser().parseFromString(`<div>${src}</div>`, 'text/html')
+  const doc = new DOMParser().parseFromString(`<div>${html}</div>`, 'text/html')
   return <>{convert(doc.body.firstChild as Node, 'r')}</>
 }
 
@@ -63,7 +54,7 @@ export function StratagemCard({ s, defaultOpen }: { s: WStratagem; defaultOpen?:
   return (
     <div className="strat" onClick={() => setOpen(!open)} role="button" tabIndex={0}>
       <div className="strat-head">
-        <span className="strat-cp">{s.cp}PM</span>
+        <span className="strat-cp">{s.cp}CP</span>
         <div className="row-body">
           <div className="row-title">{s.name}</div>
           <div className="row-sub">
@@ -86,11 +77,11 @@ export function StratagemCard({ s, defaultOpen }: { s: WStratagem; defaultOpen?:
 /** Estratagemas (y reglas) de un destacamento según Wahapedia */
 export function DetachmentStratagems({ detachment, showRules }: { detachment: string; showRules?: boolean }) {
   const { loading, data } = useWahapedia()
-  if (loading) return <div className="rule-text muted-text">Cargando estratagemas…</div>
-  if (!data) return <div className="rule-text muted-text">Las estratagemas de Wahapedia aún no están descargadas. Se descargan al publicar la app; vuelve a abrirla con conexión.</div>
+  if (loading) return <div className="rule-text muted-text">Loading stratagems…</div>
+  if (!data) return <div className="rule-text muted-text">Wahapedia stratagems aren't downloaded yet. They're fetched when the app is published; reopen it while online.</div>
   const strats = stratagemsFor(data, detachment)
   const rules = showRules ? detachmentAbilitiesFor(data, detachment) : []
-  if (!strats.length && !rules.length) return <div className="rule-text muted-text">Wahapedia no tiene estratagemas para «{detachment}» todavía.</div>
+  if (!strats.length && !rules.length) return <div className="rule-text muted-text">Wahapedia has no stratagems for “{detachment}” yet.</div>
   return (
     <>
       {rules.map((r) => (
@@ -109,5 +100,5 @@ export function DetachmentStratagems({ detachment, showRules }: { detachment: st
 export function WahapediaCredit() {
   const { data } = useWahapedia()
   if (!data) return null
-  return <>Datos de estratagemas: Wahapedia{data.updated ? ` (actualizado ${data.updated.slice(0, 10)})` : ''}.</>
+  return <>Stratagem data: Wahapedia{data.updated ? ` (updated ${data.updated.slice(0, 10)})` : ''}.</>
 }

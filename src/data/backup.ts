@@ -21,7 +21,7 @@ export async function exportBackup(): Promise<Blob> {
 
 export async function importBackup(file: File): Promise<string> {
   const j = JSON.parse(await file.text())
-  if (j.app !== 'war-army') throw new Error('Este archivo no es una copia de War Army')
+  if (j.app !== 'war-army') throw new Error('This file is not a War Army backup')
   for (const p of j.photos ?? []) await photos.put({ id: p.id, createdAt: p.createdAt, blob: base64ToBlob(p.data, p.type) })
   // Se conserva la versión más reciente de cada elemento
   const merge = async <T extends { updatedAt: string }>(table: { get: (k: string) => Promise<T | undefined>; put: (v: T) => Promise<void> }, list: T[], key: (v: T) => string) => {
@@ -38,7 +38,7 @@ export async function importBackup(file: File): Promise<string> {
   const r = await merge(rosters, j.rosters, (v: any) => v.uid)
   const c = await merge(collection, j.collection, (v: any) => v.key)
   const g = await merge(games, j.games, (v: any) => v.id)
-  return `Importado: ${r} listas, ${c} unidades de colección, ${g} partidas`
+  return `Imported: ${r} lists, ${c} collection units, ${g} games`
 }
 
 function blobToBase64(b: Blob): Promise<string> {

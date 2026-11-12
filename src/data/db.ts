@@ -76,6 +76,9 @@ export function table<T>(name: StoreName) {
 
 export const PAINT_STATUS = ['Sin montar', 'Montada', 'Imprimada', 'Pintando', 'Terminada'] as const
 export type PaintStatus = (typeof PAINT_STATUS)[number]
+/** Stored values stay as they were; these are the labels shown */
+export const PAINT_LABEL: Record<string, string> = { 'Sin montar': 'Unassembled', Montada: 'Assembled', Imprimada: 'Primed', Pintando: 'Painting', Terminada: 'Finished' }
+export const paintLabel = (s: string) => PAINT_LABEL[s] ?? s
 
 export interface CollectionItem {
   /** catalogueId:entryId */

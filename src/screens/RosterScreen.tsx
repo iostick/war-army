@@ -34,13 +34,13 @@ export function RosterScreen(props: { uid: string }) {
 
   if (error)
     return (
-      <Screen title="Lista" back="Listas">
+      <Screen title="List" back="Lists">
         <div className="empty">{error}</div>
       </Screen>
     )
   if (!roster || !index || !ev) {
     return (
-      <Screen title="" back="Listas" large={false}>
+      <Screen title="" back="Lists" large={false}>
         <div className="empty">
           <Spinner />
         </div>
@@ -93,7 +93,7 @@ export function RosterScreen(props: { uid: string }) {
       <UnitRow
         key={s.sel.uid}
         title={ev.stateOf(s).name}
-        sub={[unitSummary(ev, s), item ? `Tienes ${item.owned}/${inList}` : ''].filter(Boolean).join(' · ')}
+        sub={[unitSummary(ev, s), item ? `You have ${item.owned}/${inList}` : ''].filter(Boolean).join(' · ')}
         missing={!!item && item.owned < inList}
         photo={item?.photos[0]}
         unit={{ catalogueId: s.force.force.catalogueId, entryId: s.node.id, name: s.node.name, faction: catName ?? '' }}
@@ -109,9 +109,9 @@ export function RosterScreen(props: { uid: string }) {
     <div style={{ '--accent': accent } as CSSProperties}>
       <Screen
         title={roster.name}
-        back="Listas"
+        back="Lists"
         right={
-          <button className="bar-button" onClick={() => setAdding(true)} aria-label="Añadir unidad">
+          <button className="bar-button" onClick={() => setAdding(true)} aria-label="Add unit">
             {Icon.plus()}
           </button>
         }
@@ -124,10 +124,10 @@ export function RosterScreen(props: { uid: string }) {
             <button onClick={() => setShowIssues(true)}>
               {errors.length > 0 || over ? (
                 <span className="pill red">
-                  {Icon.warning(12)} {errors.length} {errors.length === 1 ? 'aviso' : 'avisos'}
+                  {Icon.warning(12)} {errors.length} {errors.length === 1 ? 'warning' : 'warnings'}
                 </span>
               ) : (
-                <span className="pill green">{Icon.checkCircle(12)} Válida</span>
+                <span className="pill green">{Icon.checkCircle(12)} Valid</span>
               )}
             </button>
           </div>
@@ -141,18 +141,18 @@ export function RosterScreen(props: { uid: string }) {
               DP {dpUsed}/{dpMax}
             </span>
             <span className={'chip' + (enhUsed > limits.enhancements ? ' red' : '')}>
-              Mejoras {enhUsed}/{limits.enhancements}
+              Enhancements {enhUsed}/{limits.enhancements}
             </span>
-            <span className="chip">{units.length + force.selections.filter((s) => ev.bodyguardOf(s)).length} unidades</span>
+            <span className="chip">{units.length + force.selections.filter((s) => ev.bodyguardOf(s)).length} units</span>
           </div>
         </div>
 
         <div className="tabs-inline">
           {(
             [
-              ['units', 'Unidades'],
-              ['rules', 'Reglas del ejército'],
-              ['text', 'Exportar'],
+              ['units', 'Units'],
+              ['rules', 'Army rules'],
+              ['text', 'Export'],
             ] as [View, string][]
           ).map(([v, l]) => (
             <button key={v} className={view === v ? 'on' : ''} onClick={() => setView(v)}>
@@ -163,12 +163,12 @@ export function RosterScreen(props: { uid: string }) {
 
         {view === 'units' && (
           <>
-            <Section header="Configuración">
+            <Section header="Configuration">
               {config.map((s) => (
                 <Row
                   key={s.sel.uid}
                   title={ev.stateOf(s).name}
-                  sub={s.node.name === 'Detachment' ? dets.map((d) => `${d.name} (${d.dp} DP)`).join(', ') || 'Sin elegir' : unitSummary(ev, s)}
+                  sub={s.node.name === 'Detachment' ? dets.map((d) => `${d.name} (${d.dp} DP)`).join(', ') || 'Not chosen' : unitSummary(ev, s)}
                   leading={unitIssue(s) ? <span className="dot" /> : undefined}
                   chevron
                   onClick={() =>
@@ -184,7 +184,7 @@ export function RosterScreen(props: { uid: string }) {
               const list = groups.get(cat)!
               const sum = list.reduce((a, s) => a + ev.selectionTotal(s, PTS) + ev.leadersOf(s).reduce((b, l) => b + ev.selectionTotal(l, PTS), 0), 0)
               return (
-                <Section key={cat} header={cat === 'other' ? 'Otros' : index.categories.get(cat)?.name ?? cat} headerRight={pts(sum)}>
+                <Section key={cat} header={cat === 'other' ? 'Other' : index.categories.get(cat)?.name ?? cat} headerRight={pts(sum)}>
                   {list.flatMap((s) => {
                     const leaders = ev.leadersOf(s)
                     return leaders.length ? [...leaders.map((l) => unitRow(l)), unitRow(s, true)] : [unitRow(s)]
@@ -194,14 +194,14 @@ export function RosterScreen(props: { uid: string }) {
             })}
 
             <Section>
-              <Row title="Añadir unidad" className="action" icon={Icon.plus(18)} iconBg={accent} onClick={() => setAdding(true)} />
+              <Row title="Add unit" className="action" icon={Icon.plus(18)} iconBg={accent} onClick={() => setAdding(true)} />
             </Section>
             <Section>
               <Row
-                title="Eliminar lista"
+                title="Delete list"
                 className="destructive"
                 onClick={async () => {
-                  if (!confirm(`¿Eliminar "${roster.name}"? No se puede deshacer.`)) return
+                  if (!confirm(`Delete "${roster.name}"? This can't be undone.`)) return
                   await rosterStore.delete(roster.uid)
                   dropSession(roster.uid)
                   nav.pop()
@@ -212,7 +212,7 @@ export function RosterScreen(props: { uid: string }) {
         )}
 
         {view === 'rules' && <ArmyRules ev={ev} />}
-        {view === 'text' && <ExportText ev={ev} name={roster.name} onCopied={() => flash('Lista copiada')} />}
+        {view === 'text' && <ExportText ev={ev} name={roster.name} onCopied={() => flash('List copied')} />}
 
         {adding && (
           <AddUnitSheet
@@ -222,7 +222,7 @@ export function RosterScreen(props: { uid: string }) {
             onAdd={(node, groups, name) => {
               update((r, idx) => addSelection(idx, r, force.force.uid, node, groups).roster)
               setAdding(false)
-              flash(`${name} añadido`)
+              flash(`${name} added`)
             }}
           />
         )}
@@ -307,7 +307,7 @@ export function unitSummary(ev: Evaluator, u: SelInst): string {
     const names: string[] = []
     const stack = [...u.children]
     while (stack.length) names.push(ev.stateOf(stack.shift()!).name)
-    return names.join(', ') || 'Sin elegir'
+    return names.join(', ') || 'Not chosen'
   }
   let models = u.node.type === 'model' ? u.sel.number : 0
   const extras: string[] = []
@@ -319,7 +319,7 @@ export function unitSummary(ev: Evaluator, u: SelInst): string {
     for (const c of s.children) stack.push([c, n * c.sel.number])
   }
   const bg = ev.bodyguardOf(u)
-  return [models > 1 ? `${models} modelos` : '', ...extras, bg ? `con ${ev.stateOf(bg).name}` : ''].filter(Boolean).join(' · ')
+  return [models > 1 ? `${models} models` : '', ...extras, bg ? `with ${ev.stateOf(bg).name}` : ''].filter(Boolean).join(' · ')
 }
 
 // ---------- Reglas del ejército ----------
@@ -357,7 +357,7 @@ function ArmyRules({ ev }: { ev: Evaluator }) {
   return (
     <>
       {armyRules.length > 0 && (
-        <Section header="Regla de ejército">
+        <Section header="Army rule">
           {armyRules.map((r) => (
             <div className="rule-text" key={r.name}>
               <b>{r.name}</b>
@@ -366,11 +366,11 @@ function ArmyRules({ ev }: { ev: Evaluator }) {
           ))}
         </Section>
       )}
-      {dets.length === 0 && <Section header="Destacamentos"><div className="rule-text">Todavía no has elegido destacamento.</div></Section>}
+      {dets.length === 0 && <Section header="Detachments"><div className="rule-text">You haven't chosen a detachment yet.</div></Section>}
       {dets.map((d) => {
         const rules = [...rulesOf(index, d.inst.node.target), ...rulesOf(index, d.inst.node.link)]
         return (
-          <Section key={d.inst.sel.uid} header={`Destacamento · ${d.name} · ${d.dp} DP`} footer={[...d.dispositions, ...d.tags].join(' · ')}>
+          <Section key={d.inst.sel.uid} header={`Detachment · ${d.name} · ${d.dp} DP`} footer={[...d.dispositions, ...d.tags].join(' · ')}>
             {rules.length ? (
               rules.map((r: any) => (
                 <div className="rule-text" key={r.id ?? r.name}>
@@ -379,25 +379,25 @@ function ArmyRules({ ev }: { ev: Evaluator }) {
                 </div>
               ))
             ) : (
-              <div className="rule-text">Los datos de BSData no incluyen el texto de este destacamento.</div>
+              <div className="rule-text">The BSData data doesn't include this detachment's text.</div>
             )}
           </Section>
         )
       })}
       {enhancements.length > 0 && (
-        <Section header="Mejoras elegidas">
+        <Section header="Chosen enhancements">
           {enhancements.map((e) => (
             <div className="rule-text" key={e.unit + e.name}>
               <b>
                 {e.name} · {e.unit}
               </b>
-              <RichText text={e.text || 'Sin texto en los datos.'} />
+              <RichText text={e.text || 'No text in the data.'} />
             </div>
           ))}
         </Section>
       )}
       {dets.map((d) => (
-        <Section key={'strat:' + d.inst.sel.uid} header={`Estratagemas · ${d.name}`} footer={<WahapediaCredit />}>
+        <Section key={'strat:' + d.inst.sel.uid} header={`Stratagems · ${d.name}`} footer={<WahapediaCredit />}>
           <DetachmentStratagems detachment={d.name} />
         </Section>
       ))}
@@ -430,7 +430,7 @@ export function rosterText(ev: Evaluator, name: string): string {
     if (s.node.type === 'upgrade' || ev.bodyguardOf(s)) continue
     describe(s, 0)
     for (const l of ev.leadersOf(s)) {
-      lines.push('  ↳ Adjunto:')
+      lines.push('  ↳ Attached:')
       describe(l, 1)
     }
     lines.push('')
@@ -442,7 +442,7 @@ function ExportText({ ev, name, onCopied }: { ev: Evaluator; name: string; onCop
   const text = rosterText(ev, name)
   return (
     <>
-      <Section footer="Formato de texto plano para compartir por WhatsApp, Discord o foros.">
+      <Section footer="Plain-text format for sharing on WhatsApp, Discord or forums.">
         <pre className="rule-text" style={{ margin: 0, fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', fontSize: 12.5 }}>
           {text}
         </pre>
@@ -462,7 +462,7 @@ function ExportText({ ev, name, onCopied }: { ev: Evaluator; name: string; onCop
           }
         }}
       >
-        Compartir o copiar
+        Share or copy
       </button>
     </>
   )
@@ -494,18 +494,18 @@ function AddUnitSheet(props: { ev: Evaluator; owned: Map<string, CollectionItem>
     return limits.unitLimit
   }
   return (
-    <Sheet title="Añadir unidad" onClose={props.onClose}>
-      <Search value={q} onChange={setQ} placeholder="Buscar unidades" />
+    <Sheet title="Add unit" onClose={props.onClose}>
+      <Search value={q} onChange={setQ} placeholder="Search units" />
       <div className="tabs-inline">
         <button className={!onlyOwned ? 'on' : ''} onClick={() => setOnlyOwned(false)}>
-          Todas
+          All
         </button>
         <button className={onlyOwned ? 'on' : ''} onClick={() => setOnlyOwned(true)}>
-          Solo mi colección
+          Only my collection
         </button>
       </div>
       {cats.map((cat) => (
-        <Section key={cat} header={index.categories.get(cat)?.name ?? 'Otros'}>
+        <Section key={cat} header={index.categories.get(cat)?.name ?? 'Other'}>
           {groups.get(cat)!.map((o) => {
             const lim = limitFor(o.node)
             const full = o.count >= lim
@@ -514,7 +514,7 @@ function AddUnitSheet(props: { ev: Evaluator; owned: Map<string, CollectionItem>
               <Row
                 key={o.node.key}
                 title={o.state.name}
-                sub={[`${o.count}/${lim}`, item ? `tienes ${item.owned}` : ''].filter(Boolean).join(' · ')}
+                sub={[`${o.count}/${lim}`, item ? `you have ${item.owned}` : ''].filter(Boolean).join(' · ')}
                 detail={o.state.costs[PTS] ? pts(o.state.costs[PTS]) : ''}
                 className={full ? 'disabled' : ''}
                 onClick={() => props.onAdd(o.node, o.groups, o.state.name)}
@@ -523,7 +523,7 @@ function AddUnitSheet(props: { ev: Evaluator; owned: Map<string, CollectionItem>
           })}
         </Section>
       ))}
-      {!filtered.length && <div className="empty">Sin resultados</div>}
+      {!filtered.length && <div className="empty">No results</div>}
     </Sheet>
   )
 }
@@ -531,7 +531,7 @@ function AddUnitSheet(props: { ev: Evaluator; owned: Map<string, CollectionItem>
 function IssuesSheet(props: { issues: Issue[]; onClose: () => void; onPick: (i: Issue) => void }) {
   return (
     <Sheet
-      title="Validación"
+      title="Validation"
       onClose={props.onClose}
       left={<span />}
       right={
@@ -545,11 +545,11 @@ function IssuesSheet(props: { issues: Issue[]; onClose: () => void; onPick: (i: 
           <div className="big-icon" style={{ color: 'var(--green)' }}>
             {Icon.shield()}
           </div>
-          <h2>Todo correcto</h2>
-          <p>La lista cumple las reglas de construcción de la 11ª y las de los datos de BSData.</p>
+          <h2>All good</h2>
+          <p>The list meets the 11th edition muster rules and the BSData data rules.</p>
         </div>
       ) : (
-        <Section footer="Toca un aviso para ir a la unidad.">
+        <Section footer="Tap a warning to go to the unit.">
           {props.issues.map((i, n) => (
             <Row key={n} title={i.message} icon={Icon.warning(16)} iconBg={i.severity === 'error' ? 'var(--red)' : 'var(--orange)'} onClick={() => props.onPick(i)} />
           ))}

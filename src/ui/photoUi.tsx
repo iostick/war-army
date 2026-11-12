@@ -14,7 +14,7 @@ export interface UnitRef {
 export function PhotoPicker({ unit, children, className, label }: { unit: UnitRef; children: ReactNode; className?: string; label?: string }) {
   const [busy, setBusy] = useState(false)
   return (
-    <label className={className} aria-label={label ?? `Añadir foto de ${unit.name}`} onClick={(e) => e.stopPropagation()}>
+    <label className={className} aria-label={label ?? `Add photo of ${unit.name}`} onClick={(e) => e.stopPropagation()}>
       {busy ? <Spinner /> : children}
       <input
         type="file"

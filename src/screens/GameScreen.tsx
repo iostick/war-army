@@ -12,7 +12,8 @@ import { RulebookScreen } from './RulebookScreen'
 import { FactionPicker } from '../ui/factionPicker'
 import { useRoster } from '../data/session'
 import { detachments } from '../engine/rules11'
-import { DetachmentStratagems, WahapediaCredit } from '../ui/wahapediaUi'
+import { DetachmentStratagems, StratagemCard, WahapediaCredit } from '../ui/wahapediaUi'
+import { coreStratagems, useWahapedia } from '../data/wahapedia'
 
 export function GamesScreen() {
   const list = useTable('games', () => games.all().then((l) => l.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))))
@@ -23,9 +24,9 @@ export function GamesScreen() {
   const done = (list ?? []).filter((g) => g.finished)
   return (
     <Screen
-      title="Partidas"
+      title="Games"
       right={
-        <button className="bar-button" onClick={() => setCreating(true)} aria-label="Nueva partida">
+        <button className="bar-button" onClick={() => setCreating(true)} aria-label="New game">
           {Icon.plus()}
         </button>
       }
@@ -33,28 +34,28 @@ export function GamesScreen() {
       {list && list.length === 0 && (
         <div className="empty">
           <div className="big-icon">{Icon.dice(56)}</div>
-          <h2>Sin partidas</h2>
-          <p>Lleva el marcador de tus partidas: rondas, CP y VP de los dos jugadores, con tu lista a mano.</p>
+          <h2>No games</h2>
+          <p>Track your games: rounds, CP and VP for both players, with your list at hand.</p>
           <button className="button-filled" onClick={() => setCreating(true)}>
-            Empezar partida
+            Start game
           </button>
         </div>
       )}
       {active.length > 0 && (
-        <Section header="En curso">
+        <Section header="In progress">
           {active.map((g) => (
-            <Row key={g.id} title={`${g.rosterName ?? 'Mi ejército'} vs ${g.opponent || 'Rival'}`} sub={`Ronda ${g.round} · ${g.mission || 'Sin misión'}`} detail={`${g.vp[0]}–${g.vp[1]}`} chevron onClick={() => open(g.id)} />
+            <Row key={g.id} title={`${g.rosterName ?? 'My army'} vs ${g.opponent || 'Opponent'}`} sub={`Round ${g.round} · ${g.mission || 'No mission'}`} detail={`${g.vp[0]}–${g.vp[1]}`} chevron onClick={() => open(g.id)} />
           ))}
         </Section>
       )}
       {done.length > 0 && (
-        <Section header="Historial">
+        <Section header="History">
           {done.map((g) => (
             <Row
               key={g.id}
-              title={`${g.rosterName ?? 'Mi ejército'} vs ${g.opponent || 'Rival'}`}
-              sub={new Date(g.createdAt).toLocaleDateString('es-ES')}
-              accessory={<span className={'pill ' + (g.vp[0] > g.vp[1] ? 'green' : g.vp[0] < g.vp[1] ? 'red' : '')}>{g.vp[0] > g.vp[1] ? 'Victoria' : g.vp[0] < g.vp[1] ? 'Derrota' : 'Empate'} {g.vp[0]}–{g.vp[1]}</span>}
+              title={`${g.rosterName ?? 'My army'} vs ${g.opponent || 'Opponent'}`}
+              sub={new Date(g.createdAt).toLocaleDateString('en-GB')}
+              accessory={<span className={'pill ' + (g.vp[0] > g.vp[1] ? 'green' : g.vp[0] < g.vp[1] ? 'red' : '')}>{g.vp[0] > g.vp[1] ? 'Win' : g.vp[0] < g.vp[1] ? 'Loss' : 'Draw'} {g.vp[0]}–{g.vp[1]}</span>}
               chevron
               onClick={() => open(g.id)}
             />
@@ -89,28 +90,28 @@ function NewGameSheet({ onClose, onCreated }: { onClose: () => void; onCreated: 
   }
   return (
     <Sheet
-      title="Nueva partida"
+      title="New game"
       onClose={onClose}
       right={
         <button className="bar-button bold" onClick={create}>
-          Empezar
+          Start
         </button>
       }
     >
-      <Section header="Rival">
+      <Section header="Opponent">
         <div className="row">
-          <input className="text-input" placeholder="Nombre del rival" value={opponent} onChange={(e) => setOpponent(e.target.value)} />
+          <input className="text-input" placeholder="Opponent's name" value={opponent} onChange={(e) => setOpponent(e.target.value)} />
         </div>
         <div className="row">
-          <input className="text-input" placeholder="Misión o disposiciones" value={mission} onChange={(e) => setMission(e.target.value)} />
+          <input className="text-input" placeholder="Mission or deployment" value={mission} onChange={(e) => setMission(e.target.value)} />
         </div>
       </Section>
       <div className="section-header">
-        <span>Su ejército</span>
+        <span>Their army</span>
       </div>
       <FactionPicker value={oppFaction} onChange={(f) => setOppFaction(f.short)} />
-      <Section header="Mi lista">
-        <Row title="Sin lista" checked={!roster} onClick={() => setRoster(undefined)} />
+      <Section header="My list">
+        <Row title="No list" checked={!roster} onClick={() => setRoster(undefined)} />
         {(rosters ?? []).map((r) => (
           <Row key={r.uid} title={r.name} sub={r.summary ? `${r.summary.faction} · ${r.summary.points} pts` : undefined} checked={roster === r.uid} onClick={() => setRoster(r.uid)} />
         ))}
@@ -131,11 +132,11 @@ export function GameScreen({ id }: { id: string }) {
     save({ [key]: next } as Partial<Game>)
   }
   return (
-    <Screen title={`Ronda ${g.round}`} back="Partidas" subtitle={`${g.rosterName ?? 'Mi ejército'} vs ${g.opponent || 'Rival'}${g.opponentFaction ? ` (${g.opponentFaction})` : ''}${g.mission ? ' · ' + g.mission : ''}`}>
+    <Screen title={`Round ${g.round}`} back="Games" subtitle={`${g.rosterName ?? 'My army'} vs ${g.opponent || 'Opponent'}${g.opponentFaction ? ` (${g.opponentFaction})` : ''}${g.mission ? ' · ' + g.mission : ''}`}>
       <div className="score-grid">
         {([0, 1] as const).map((i) => (
           <div className="score-card" key={i}>
-            <h3>{i === 0 ? 'Yo' : g.opponent || 'Rival'}</h3>
+            <h3>{i === 0 ? 'Me' : g.opponent || 'Opponent'}</h3>
             <div className="label">VP</div>
             <div className="big-number">{g.vp[i]}</div>
             <Stepper value={g.vp[i]} onChange={(v) => setPair('vp', i, v)} />
@@ -147,44 +148,44 @@ export function GameScreen({ id }: { id: string }) {
           </div>
         ))}
       </div>
-      <Section header="Ronda" footer="Al pasar de ronda, cada jugador gana 1CP (fase de mando).">
-        <Row title="Ronda actual" accessory={<Stepper value={g.round} min={1} max={5} onChange={(v) => save({ round: v })} />} />
+      <Section header="Round" footer="When the round advances, each player gains 1CP (Command phase).">
+        <Row title="Current round" accessory={<Stepper value={g.round} min={1} max={5} onChange={(v) => save({ round: v })} />} />
         <Row
-          title="Siguiente ronda (+1CP cada uno)"
+          title="Next round (+1CP each)"
           className={'action' + (g.round >= 5 ? ' disabled' : '')}
           icon={Icon.refresh(16)}
           onClick={() => save({ round: Math.min(5, g.round + 1), cp: [g.cp[0] + 1, g.cp[1] + 1] })}
         />
       </Section>
       <Section>
-        <Row title="Estratagemas" icon={Icon.list(16)} chevron onClick={() => setStrats(true)} />
-        <Row title="Misiones (primarias y secundarias)" icon={Icon.dice(16)} chevron onClick={() => nav.push({ key: 'book:missions', render: () => <RulebookScreen id="warhammer-event-companion" back="Partida" /> })} />
-        <Row title="Reglas básicas" icon={Icon.shield(16)} chevron onClick={() => nav.push({ key: 'book:core', render: () => <RulebookScreen id="core-rules" back="Partida" /> })} />
-        {g.rosterUid && <Row title="Ver mi lista" icon={Icon.shield(16)} chevron onClick={() => nav.push({ key: 'roster:' + g.rosterUid, render: () => <RosterScreen uid={g.rosterUid!} /> })} />}
+        <Row title="Stratagems" icon={Icon.list(16)} chevron onClick={() => setStrats(true)} />
+        <Row title="Missions (primary and secondary)" icon={Icon.dice(16)} chevron onClick={() => nav.push({ key: 'book:missions', render: () => <RulebookScreen id="warhammer-event-companion" back="Game" /> })} />
+        <Row title="Core rules" icon={Icon.shield(16)} chevron onClick={() => nav.push({ key: 'book:core', render: () => <RulebookScreen id="core-rules" back="Game" /> })} />
+        {g.rosterUid && <Row title="View my list" icon={Icon.shield(16)} chevron onClick={() => nav.push({ key: 'roster:' + g.rosterUid, render: () => <RosterScreen uid={g.rosterUid!} /> })} />}
       </Section>
-      <Section header="Notas">
+      <Section header="Notes">
         <div className="row">
-          <textarea className="text-input" rows={3} defaultValue={g.notes} onBlur={(e) => save({ notes: e.target.value })} placeholder="Objetivos secundarios, jugadas clave…" />
+          <textarea className="text-input" rows={3} defaultValue={g.notes} onBlur={(e) => save({ notes: e.target.value })} placeholder="Secondary objectives, key plays…" />
         </div>
       </Section>
       <Section>
         {g.finished ? (
-          <Row title="Reabrir partida" className="action" onClick={() => save({ finished: false })} />
+          <Row title="Reopen game" className="action" onClick={() => save({ finished: false })} />
         ) : (
-          <Row title="Terminar partida" className="action" onClick={() => save({ finished: true })} />
+          <Row title="End game" className="action" onClick={() => save({ finished: true })} />
         )}
         <Row
-          title="Borrar partida"
+          title="Delete game"
           className="destructive"
           onClick={async () => {
-            if (!confirm('¿Borrar esta partida?')) return
+            if (!confirm('Delete this game?')) return
             await games.delete(g.id)
             nav.pop()
           }}
         />
       </Section>
       {strats && (
-        <Sheet title="Estratagemas" onClose={() => setStrats(false)} left={<span />} right={<button className="bar-button bold" onClick={() => setStrats(false)}>Cerrar</button>}>
+        <Sheet title="Stratagems" onClose={() => setStrats(false)} left={<span />} right={<button className="bar-button bold" onClick={() => setStrats(false)}>Close</button>}>
           {g.rosterUid && <RosterStratagems rosterUid={g.rosterUid} />}
           <StratagemList />
         </Sheet>
@@ -194,22 +195,32 @@ export function GameScreen({ id }: { id: string }) {
 }
 
 export function StratagemList() {
+  const { data } = useWahapedia()
+  const core = coreStratagems(data)
+  if (core.length)
+    return (
+      <Section header="Core stratagems" footer={<WahapediaCredit />}>
+        {core.map((s) => (
+          <StratagemCard key={s.id} s={s} />
+        ))}
+      </Section>
+    )
   return (
-    <Section header="Estratagemas básicas" footer="Resumen propio del reglamento de la 11ª en español (sección 15). PM = puntos de mando.">
+    <Section header="Core stratagems" footer="Our own summary of the 11th edition core rules (section 15).">
       {CORE_STRATAGEMS.map((s) => (
         <div className="rule-text" key={s.name}>
           <b>
-            {s.name} · {s.cp} <span style={{ color: 'var(--label-3)', fontWeight: 500 }}>({s.en} · {s.ref})</span>
+            {s.name} · {s.cp} <span style={{ color: 'var(--label-3)', fontWeight: 500 }}>({s.ref})</span>
           </b>
-          <strong style={{ color: 'var(--label)' }}>Cuándo:</strong> {s.when}
+          <strong style={{ color: 'var(--label)' }}>When:</strong> {s.when}
           {'\n'}
-          <strong style={{ color: 'var(--label)' }}>Objetivo:</strong> {s.target}
+          <strong style={{ color: 'var(--label)' }}>Target:</strong> {s.target}
           {'\n'}
-          <strong style={{ color: 'var(--label)' }}>Efecto:</strong> {s.effect}
+          <strong style={{ color: 'var(--label)' }}>Effect:</strong> {s.effect}
           {s.limit && (
             <>
               {'\n'}
-              <strong style={{ color: 'var(--label)' }}>Restricción:</strong> {s.limit}
+              <strong style={{ color: 'var(--label)' }}>Restriction:</strong> {s.limit}
             </>
           )}
         </div>
@@ -224,7 +235,7 @@ function RosterStratagems({ rosterUid }: { rosterUid: string }) {
   return (
     <>
       {detachments(ev).map((d) => (
-        <Section key={d.inst.sel.uid} header={`Destacamento · ${d.name}`} footer={<WahapediaCredit />}>
+        <Section key={d.inst.sel.uid} header={`Detachment · ${d.name}`} footer={<WahapediaCredit />}>
           <DetachmentStratagems detachment={d.name} />
         </Section>
       ))}

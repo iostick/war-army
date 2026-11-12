@@ -23,6 +23,6 @@ describe('Wahapedia CSV', () => {
     expect(stratagemsFor(data, 'Awakened Dynasty')).toHaveLength(1)
     expect(stratagemsFor(data, 'Awakened Dynasty Detachment')).toHaveLength(1)
     expect(normName("Annihilation Legion")).toBe('annihilation legion')
-    expect(phaseEs('Shooting or Fight')).toBe('Fase de disparo o Fase de combate')
+    expect(phaseEs('Shooting or Fight')).toBe('Shooting phase or Fight phase')
   })
 })

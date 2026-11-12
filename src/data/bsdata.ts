@@ -32,7 +32,7 @@ export function factions(meta: SyncMeta): { group: string; items: (CatalogueInfo
   for (const c of meta.catalogues) {
     if (c.library) continue
     const [g, ...rest] = c.name.split(' - ')
-    const group = rest.length ? g : 'Otros'
+    const group = rest.length ? g : 'Other'
     const short = rest.length ? rest.join(' - ') : c.name
     if (!groups.has(group)) groups.set(group, [])
     groups.get(group)!.push({ ...c, short })

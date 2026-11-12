@@ -14,7 +14,7 @@ export function createRoster(index: DataIndex, name: string, catalogueId: string
     uid: uid(),
     forceEntryId,
     catalogueId,
-    name: `${fe?.name ?? 'Fuerza'} · ${cat?.name ?? ''}`,
+    name: `${fe?.name ?? 'Force'} · ${cat?.name ?? ''}`,
     selections: [],
     forces: [],
   }

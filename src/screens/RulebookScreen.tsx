@@ -7,7 +7,7 @@ import { useNav } from '../ui/nav'
 export function RulebookList() {
   const nav = useNav()
   return (
-    <Section footer="Texto de Wahapedia (en inglés), descargado al publicar la app y actualizado cada día.">
+    <Section footer="Text from Wahapedia, downloaded when the app is published and refreshed daily.">
       {RULE_PAGES.map((p) => (
         <Row key={p.id} title={p.title} sub={p.sub} chevron onClick={() => nav.push({ key: 'book:' + p.id, render: () => <RulebookScreen id={p.id} /> })} />
       ))}
@@ -43,18 +43,18 @@ export function RulebookScreen({ id, back }: { id: string; back?: string }) {
   const open = (ch: Chapter, focus?: string) => nav.push({ key: 'ch:' + id + ch.head.id, render: () => <ChapterScreen ch={ch} focus={focus} back={page.title} /> })
   const chapterOf = (s: RuleSection) => chs.find((c) => c.head === s || c.items.includes(s))!
   return (
-    <Screen title={page.title} back={back ?? 'Reglas'}>
+    <Screen title={page.title} back={back ?? 'Rules'}>
       {loading && (
         <div className="empty">
           <Spinner />
         </div>
       )}
-      {!loading && !sections?.length && <div className="empty">Este texto aún no está descargado. Se descarga de Wahapedia al publicar la app; vuelve a abrirla con conexión.</div>}
+      {!loading && !sections?.length && <div className="empty">This text isn't downloaded yet. It's fetched from Wahapedia when the app is published; reopen it while online.</div>}
       {!!sections?.length && (
         <>
-          <Search value={q} onChange={setQ} placeholder="Buscar en el reglamento (p. ej. cover, visible)" />
+          <Search value={q} onChange={setQ} placeholder="Search the rules (e.g. cover, visible)" />
           {q.trim().length >= 2 ? (
-            <Section header={`${hits.length} resultados`}>
+            <Section header={`${hits.length} results`}>
               {hits.map((s) => (
                 <Row key={s.id} title={s.title} sub={snippet(s.text, q)} chevron onClick={() => open(chapterOf(s), s.id)} />
               ))}

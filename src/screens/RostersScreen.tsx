@@ -29,9 +29,9 @@ export function RostersScreen() {
 
   return (
     <Screen
-      title="Listas"
+      title="Lists"
       right={
-        <button className="bar-button" onClick={() => setCreating(true)} aria-label="Nueva lista">
+        <button className="bar-button" onClick={() => setCreating(true)} aria-label="New list">
           {Icon.plus()}
         </button>
       }
@@ -39,10 +39,10 @@ export function RostersScreen() {
       {rosters && rosters.length === 0 && (
         <div className="empty">
           <div className="big-icon">{Icon.shield()}</div>
-          <h2>Sin listas todavía</h2>
-          <p>Crea tu primera lista de ejército de la 11ª edición.</p>
+          <h2>No lists yet</h2>
+          <p>Create your first 11th edition army list.</p>
           <button className="button-filled" onClick={() => setCreating(true)}>
-            Nueva lista
+            New list
           </button>
         </div>
       )}
@@ -55,14 +55,14 @@ export function RostersScreen() {
             return (
               <button key={r.uid} className="roster-card" style={{ '--accent': factionColor(s?.faction) } as CSSProperties} onClick={() => open(r.uid)}>
                 <div className="roster-card-top">
-                  <span className="roster-faction">{shortFaction(s?.faction) || 'Lista'}</span>
+                  <span className="roster-faction">{shortFaction(s?.faction) || 'List'}</span>
                   {s &&
                     (s.errors > 0 || over ? (
                       <span className="pill glass">
-                        {Icon.warning(12)} {s.errors} {s.errors === 1 ? 'aviso' : 'avisos'}
+                        {Icon.warning(12)} {s.errors} {s.errors === 1 ? 'warning' : 'warnings'}
                       </span>
                     ) : (
-                      <span className="pill glass">{Icon.checkCircle(12)} Válida</span>
+                      <span className="pill glass">{Icon.checkCircle(12)} Valid</span>
                     ))}
                 </div>
                 <div className="roster-name">{r.name}</div>
@@ -109,7 +109,7 @@ function NewRosterSheet(props: { onClose: () => void; onCreated: (uid: string) =
     setBusy(true)
     try {
       const index = await getIndex(cat)
-      const roster = createRoster(index, name.trim() || `${chosen?.short ?? 'Ejército'} ${points}`, cat, points)
+      const roster = createRoster(index, name.trim() || `${chosen?.short ?? 'Army'} ${points}`, cat, points)
       roster.summary = summarize(index, roster)
       await rosterStore.put(roster)
       props.onCreated(roster.uid)
@@ -121,24 +121,24 @@ function NewRosterSheet(props: { onClose: () => void; onCreated: (uid: string) =
 
   return (
     <Sheet
-      title="Nueva lista"
+      title="New list"
       onClose={props.onClose}
       right={
         <button className="bar-button bold" disabled={!cat || busy} onClick={create}>
-          Crear
+          Create
         </button>
       }
     >
       {busy ? (
         <div className="empty">
           <Spinner />
-          <p>Preparando {chosen?.short}…</p>
+          <p>Preparing {chosen?.short}…</p>
         </div>
       ) : (
         <>
           <Section>
             <div className="row">
-              <input className="text-input" placeholder={chosen ? `${chosen.short} ${points}` : 'Nombre de la lista'} value={name} onChange={(e) => setName(e.target.value)} />
+              <input className="text-input" placeholder={chosen ? `${chosen.short} ${points}` : 'List name'} value={name} onChange={(e) => setName(e.target.value)} />
             </div>
           </Section>
           <Segmented

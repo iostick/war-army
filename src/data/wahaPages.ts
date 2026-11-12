@@ -13,9 +13,9 @@ export interface RuleSection {
 }
 
 export const RULE_PAGES = [
-  { id: 'core-rules', title: 'Reglas básicas', sub: 'Movimiento, visión, terreno, disparo, combate…' },
-  { id: 'warhammer-event-companion', title: 'Misiones', sub: 'Misiones primarias, secundarias y despliegues' },
-  { id: 'rules-appendix', title: 'Apéndice de reglas', sub: 'Aclaraciones y casos especiales' },
+  { id: 'core-rules', title: 'Core rules', sub: 'Movement, visibility, terrain, shooting, fighting…' },
+  { id: 'warhammer-event-companion', title: 'Missions', sub: 'Primary and secondary missions, deployments' },
+  { id: 'rules-appendix', title: 'Rules appendix', sub: 'Clarifications and special cases' },
 ] as const
 
 const ALLOWED = new Set(['P', 'B', 'STRONG', 'I', 'EM', 'BR', 'UL', 'OL', 'LI', 'TABLE', 'THEAD', 'TBODY', 'TR', 'TD', 'TH', 'H4', 'H5', 'H6', 'IMG', 'SPAN', 'DIV', 'SUP', 'SUB'])

@@ -86,7 +86,7 @@ export function validateCore(ev: Evaluator): Issue[] {
       if (list.length > limit) {
         issues.push({
           severity: 'error',
-          message: `${ev.stateOf(list[0]).name}: máximo ${limit} por ejército${why} (tienes ${list.length})`,
+          message: `${ev.stateOf(list[0]).name}: maximum ${limit} per army${why} (you have ${list.length})`,
           targetUid: list[limit].sel.uid,
         })
       }
@@ -101,8 +101,8 @@ export function validateCore(ev: Evaluator): Issue[] {
       stack.push(...s.children)
     }
     const hasCharacter = f.selections.some((s) => categoryNames(ev, s).includes('Character'))
-    if (hasCharacter && warlords === 0) issues.push({ severity: 'error', message: 'Elige un Warlord: entra en un personaje y marca «Warlord»', targetUid: f.force.uid })
-    if (warlords > 1) issues.push({ severity: 'error', message: `Solo puede haber un Warlord (tienes ${warlords})`, targetUid: f.force.uid })
+    if (hasCharacter && warlords === 0) issues.push({ severity: 'error', message: 'Choose a Warlord: open a character and tick “Warlord”', targetUid: f.force.uid })
+    if (warlords > 1) issues.push({ severity: 'error', message: `There can only be one Warlord (you have ${warlords})`, targetUid: f.force.uid })
   }
 
   // Destacamentos: no se repiten etiquetas
@@ -111,7 +111,7 @@ export function validateCore(ev: Evaluator): Issue[] {
   for (const d of dets) for (const t of d.tags) tagOwners.set(t, [...(tagOwners.get(t) ?? []), d.name])
   for (const [tag, names] of tagOwners) {
     if (names.length > 1)
-      issues.push({ severity: 'error', message: `Destacamentos con la misma etiqueta «${tag}»: ${names.join(' y ')}. Solo puede haber uno.`, targetUid: dets[0].inst.parent.kind === 'sel' ? dets[0].inst.parent.sel.uid : undefined })
+      issues.push({ severity: 'error', message: `Detachments with the same tag “${tag}”: ${names.join(' and ')}. Only one is allowed.`, targetUid: dets[0].inst.parent.kind === 'sel' ? dets[0].inst.parent.sel.uid : undefined })
   }
 
   // Disposición de fuerza: debe ser una de las de tus destacamentos
@@ -120,7 +120,7 @@ export function validateCore(ev: Evaluator): Issue[] {
   const allowed = new Set(dets.flatMap((d) => d.dispositions))
   for (const c of chosen) {
     if (dets.length && !allowed.has(c))
-      issues.push({ severity: 'error', message: `La disposición «${c}» no la ofrece ninguno de tus destacamentos (${[...allowed].join(', ') || 'ninguna'})`, targetUid: fd?.sel.uid })
+      issues.push({ severity: 'error', message: `The disposition “${c}” isn't offered by any of your detachments (${[...allowed].join(', ') || 'none'})`, targetUid: fd?.sel.uid })
   }
   return issues
 }

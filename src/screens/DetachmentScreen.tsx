@@ -15,14 +15,14 @@ export function DetachmentScreen(props: { rosterUid: string; selUid: string }) {
   const [open, setOpen] = useState<string>()
   if (!ev)
     return (
-      <Screen title="Destacamentos" large={false}>
+      <Screen title="Detachments" large={false}>
         <div className="empty">
           <Spinner />
         </div>
       </Screen>
     )
   const inst = ev.findInst(props.selUid)
-  if (!inst || inst.kind !== 'sel') return <Screen title="Destacamentos">{null}</Screen>
+  if (!inst || inst.kind !== 'sel') return <Screen title="Detachments">{null}</Screen>
   const index = ev.index
   const DP = index.costTypes.find((c) => c.name === 'Detachment Points')?.id ?? ''
   const limits = coreLimits(ev)
@@ -53,30 +53,30 @@ export function DetachmentScreen(props: { rosterUid: string; selUid: string }) {
 
   return (
     <div style={{ '--accent': factionColor(index.catalogues.get(inst.force.force.catalogueId)?.name) } as React.CSSProperties}>
-    <Screen title="Destacamentos" back="Lista">
+    <Screen title="Detachments" back="List">
       <div className="points-card">
         <div className="points-top">
           <div className="points-value">
             {used} <small>/ {max} DP</small>
           </div>
-          <span className={'pill ' + (used > max ? 'red' : 'green')}>{used > max ? 'Te pasas' : `Quedan ${max - used} DP`}</span>
+          <span className={'pill ' + (used > max ? 'red' : 'green')}>{used > max ? 'Over limit' : `${max - used} DP left`}</span>
         </div>
         <div className={'meter' + (used > max ? ' over' : '')}>
           <div style={{ width: `${Math.min(100, (used / max) * 100)}%` }} />
         </div>
         <div className="chips">
-          <span className="chip">No se repiten etiquetas</span>
-          {limits.size === 'incursion' && <span className="chip">Incursion: un destacamento de 3 DP solo vale si va solo</span>}
+          <span className="chip">No repeated tags</span>
+          {limits.size === 'incursion' && <span className="chip">Incursion: a 3 DP detachment is only allowed on its own</span>}
         </div>
       </div>
 
-      <Section footer="Toca el nombre para ver las reglas del destacamento.">
+      <Section footer="Tap the name to see the detachment rules.">
         {opts.map((o) => {
           const d = info(o)
           const selected = o.count > 0
           const conflict = !selected && d.tags.find((t) => usedTags.has(t))
           const tooExpensive = !selected && used + d.dp > (limits.size === 'incursion' && chosen.length === 0 && d.dp === 3 ? 3 : limits.detachmentPoints)
-          const reason = conflict ? `Ya tienes un destacamento ${conflict}` : tooExpensive ? 'No te quedan DP suficientes' : ''
+          const reason = conflict ? `You already have a detachment tagged ${conflict}` : tooExpensive ? 'Not enough DP left' : ''
           const rules = [...rulesOf(index, o.node.target), ...rulesOf(index, o.node.link)]
           return (
             <div key={o.node.key}>
@@ -95,7 +95,7 @@ export function DetachmentScreen(props: { rosterUid: string; selUid: string }) {
                 accessory={
                   <button
                     className="bar-button"
-                    aria-label="Ver reglas"
+                    aria-label="View rules"
                     onClick={(e) => {
                       e.stopPropagation()
                       setOpen(open === o.node.key ? undefined : o.node.key)
@@ -115,7 +115,7 @@ export function DetachmentScreen(props: { rosterUid: string; selUid: string }) {
                     </div>
                   ))
                 ) : (
-                  <div className="rule-text">Sin texto de reglas en los datos.</div>
+                  <div className="rule-text">No rules text in the data.</div>
                 ))}
             </div>
           )

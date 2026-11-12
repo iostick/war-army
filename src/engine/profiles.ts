@@ -58,7 +58,7 @@ export function datasheet(index: DataIndex, ev: Evaluator, unit: SelInst): Datas
   const rules = new Map<string, string>()
   const add = (p: Raw, count: number) => {
     if (p.hidden) return
-    const typeName: string = p.typeName ?? index.byId.get(p.typeId)?.name ?? 'Perfil'
+    const typeName: string = p.typeName ?? index.byId.get(p.typeId)?.name ?? 'Profile'
     const list = (profiles[typeName] ??= [])
     const chars = (p.characteristics ?? []).map((c: Raw) => ({ name: c.name, value: String(c.$text ?? c.value ?? '') }))
     const existing = list.find((x) => x.name === p.name && JSON.stringify(x.characteristics) === JSON.stringify(chars))

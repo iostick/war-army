@@ -675,7 +675,7 @@ export class Evaluator {
     }
 
     for (const u of this.unresolved) {
-      push({ severity: 'error', message: `"${u.name}" ya no existe en los datos actuales de BSData`, targetUid: u.uid }, 'unres:' + u.uid)
+      push({ severity: 'error', message: `"${u.name}" no longer exists in the current BSData data`, targetUid: u.uid }, 'unres:' + u.uid)
     }
 
     for (const f of this.allForces()) {
@@ -712,7 +712,7 @@ export class Evaluator {
         const mine = o.selections
         if (state.hidden && !mine.length) return
         if (state.hidden && mine.length) {
-          push({ severity: 'error', message: `${state.name} no está disponible con la configuración actual`, targetUid: mine[0].sel.uid }, 'hid:' + mine[0].sel.uid)
+          push({ severity: 'error', message: `${state.name} is not available with the current configuration`, targetUid: mine[0].sel.uid }, 'hid:' + mine[0].sel.uid)
           return
         }
         const self: SelInst | VirtualInst = mine[0] ?? { kind: 'virtual', node, groups, parent, mult: 0 }
@@ -739,9 +739,9 @@ export class Evaluator {
           if ((c.field ?? 'selections') !== 'selections' || (c.scope ?? 'parent') !== 'parent') continue
           const v = gi.state.constraintValues[c.id] ?? Number(c.value)
           if (c.type === 'min' && gi.count < v)
-            push({ severity: 'error', message: `${gi.state.name}: elige al menos ${v} (tienes ${gi.count})`, targetUid: parentUid }, `g:${parentUid}:${gi.node.key}:${c.id}`)
+            push({ severity: 'error', message: `${gi.state.name}: choose at least ${v} (you have ${gi.count})`, targetUid: parentUid }, `g:${parentUid}:${gi.node.key}:${c.id}`)
           if (c.type === 'max' && v >= 0 && gi.count > v)
-            push({ severity: 'error', message: `${gi.state.name}: máximo ${v} (tienes ${gi.count})`, targetUid: parentUid }, `g:${parentUid}:${gi.node.key}:${c.id}`)
+            push({ severity: 'error', message: `${gi.state.name}: maximum ${v} (you have ${gi.count})`, targetUid: parentUid }, `g:${parentUid}:${gi.node.key}:${c.id}`)
         }
       },
     )
@@ -754,19 +754,19 @@ export class Evaluator {
     for (const a of s.sel.associations ?? []) {
       const target = s.force.selections.find((t) => t.sel.uid === a.target)
       if (!target) {
-        push({ severity: 'error', message: `${name}: la unidad a la que estaba adjunto ya no está en la lista`, targetUid: s.sel.uid }, 'as-miss:' + s.sel.uid)
+        push({ severity: 'error', message: `${name}: the unit it was attached to is no longer in the list`, targetUid: s.sel.uid }, 'as-miss:' + s.sel.uid)
         continue
       }
       const def = defs.find((d) => d.id === a.id)
       if (!def || !this.associationCandidates(s, def).includes(target)) {
-        push({ severity: 'error', message: `${name} no puede unirse a ${this.stateOf(target).name}`, targetUid: s.sel.uid }, 'as-bad:' + s.sel.uid)
+        push({ severity: 'error', message: `${name} can't join ${this.stateOf(target).name}`, targetUid: s.sel.uid }, 'as-bad:' + s.sel.uid)
       }
     }
     for (const d of defs) {
       const n = (s.sel.associations ?? []).filter((a) => a.id === d.id).length
       const min = Number(d.min ?? 0)
       if (n < min && !bg) {
-        const what = /support/i.test(d.name ?? '') ? 'debe apoyar a una unidad' : 'debe unirse a una unidad'
+        const what = /support/i.test(d.name ?? '') ? 'must support a unit' : 'must join a unit'
         push({ severity: 'error', message: `${name} ${what}`, targetUid: s.sel.uid }, `as-min:${s.sel.uid}:${d.id}`)
       }
     }
@@ -784,9 +784,9 @@ export class Evaluator {
     const what = field === 'selections' ? '' : ` ${this.index.costTypeName(field)}`
     const fill = (msg: string) => msg.replace(/\{value\}/g, String(value))
     if (c.type === 'min' && n < value) {
-      push({ severity: 'error', message: c.message ? fill(c.message) : `${name}: mínimo ${value}${what} (tienes ${n})`, targetUid }, key)
+      push({ severity: 'error', message: c.message ? fill(c.message) : `${name}: minimum ${value}${what} (you have ${n})`, targetUid }, key)
     } else if (c.type === 'max' && n > value) {
-      push({ severity: 'error', message: c.message ? fill(c.message) : `${name}: máximo ${value}${what} (tienes ${n})`, targetUid }, key)
+      push({ severity: 'error', message: c.message ? fill(c.message) : `${name}: maximum ${value}${what} (you have ${n})`, targetUid }, key)
     }
   }
 }

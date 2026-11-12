@@ -14,7 +14,7 @@ import {
 import { datasheet, optionText } from "../engine/profiles";
 import { detachments } from "../engine/rules11";
 import { splitKeywords } from "../data/glossary";
-import { collection, PAINT_STATUS } from "../data/db";
+import { collection, PAINT_STATUS, paintLabel } from "../data/db";
 import { usePhotoUrl } from "../data/photos";
 import { useTable } from "../data/useTable";
 import type { DataIndex } from "../engine/catalog";
@@ -58,8 +58,8 @@ export function SelectionScreen(props: {
   }
   if (!inst || inst.kind !== "sel") {
     return (
-      <Screen title="Eliminada" back={props.back}>
-        <div className="empty">Esta selección ya no está en la lista.</div>
+      <Screen title="Removed" back={props.back}>
+        <div className="empty">This selection is no longer in the list.</div>
       </Screen>
     );
   }
@@ -154,7 +154,7 @@ export function SelectionScreen(props: {
         const info = desc ? (
           <button
             className="info-button"
-            aria-label={`Qué hace ${name}`}
+            aria-label={`What it does: ${name}`}
             onClick={(e) => {
               e.stopPropagation();
               show(name, undefined, { name, description: desc });
@@ -234,7 +234,7 @@ export function SelectionScreen(props: {
     <div style={{ "--accent": accent } as React.CSSProperties}>
       <Screen
         title={state.name}
-        back={props.back ?? "Lista"}
+        back={props.back ?? "List"}
         subtitle={total ? pts(total) : undefined}
       >
         {isRoot && inst.node.type !== "upgrade" && (
@@ -256,16 +256,16 @@ export function SelectionScreen(props: {
           return (
             <Section
               key={d.id}
-              header={isSupport ? "Apoya a (Support)" : "Lidera a (Leader)"}
+              header={isSupport ? "Supports" : "Leads"}
               footer={
                 isSupport
-                  ? "Una unidad de apoyo debe unirse a una de estas unidades."
-                  : "Opcional. Cada unidad admite un líder y un apoyo."
+                  ? "A support unit must join one of these units."
+                  : "Optional. Each unit can take one leader and one support."
               }
             >
               {!isSupport && (
                 <Row
-                  title="Sin unir"
+                  title="Not attached"
                   checked={!current}
                   onClick={() =>
                     update((r) => attach(r, inst.sel.uid, d.id, undefined))
@@ -290,7 +290,7 @@ export function SelectionScreen(props: {
                     title={ev.stateOf(c).name}
                     sub={
                       taken.length
-                        ? `Ya lleva ${taken.map((t) => ev.stateOf(t).name).join(", ")}`
+                        ? `Already has ${taken.map((t) => ev.stateOf(t).name).join(", ")}`
                         : undefined
                     }
                     detail={pts(ev.selectionTotal(c, PTS))}
@@ -310,8 +310,8 @@ export function SelectionScreen(props: {
               })}
               {!cands.length && (
                 <Row
-                  title="No hay unidades válidas en la lista"
-                  sub="Añade una de las unidades que puede liderar."
+                  title="No valid units in the list"
+                  sub="Add one of the units it can lead."
                 />
               )}
             </Section>
@@ -319,7 +319,7 @@ export function SelectionScreen(props: {
         })}
 
         {leaders.length > 0 && (
-          <Section header="Unidad adjunta">
+          <Section header="Attached unit">
             {leaders.map((l) => (
               <Row
                 key={l.sel.uid}
@@ -358,13 +358,13 @@ export function SelectionScreen(props: {
         {isRoot && inst.node.type !== "upgrade" && (
           <Section>
             <Row
-              title="Duplicar unidad"
+              title="Duplicate unit"
               className="action"
               icon={Icon.copy(17)}
               onClick={() => update((r) => duplicateSelection(r, inst.sel.uid))}
             />
             <Row
-              title="Eliminar unidad"
+              title="Delete unit"
               className="action"
               icon={Icon.trash(17)}
               iconBg="var(--red)"
@@ -405,7 +405,7 @@ function buildSections(ev: Evaluator, inst: SelInst): OptionSection[] {
       const max = info?.max ?? -1;
       sec = {
         key,
-        title: o.groups.map((x) => x.name).join(" › ") || "Opciones",
+        title: o.groups.map((x) => x.name).join(" › ") || "Options",
         group: g,
         radio: max === 1 && !!g,
         min,
@@ -426,11 +426,11 @@ function limitsText(
   max: number,
   count: number,
 ): string | undefined {
-  if (max === 1 && min === 1) return "Elige 1.";
-  if (max === 1) return "Opcional: elige 1 como máximo.";
-  if (min > 0 && max > 0) return `Entre ${min} y ${max} (tienes ${count}).`;
-  if (min > 0) return `Al menos ${min} (tienes ${count}).`;
-  if (max > 0) return `Hasta ${max} (tienes ${count}).`;
+  if (max === 1 && min === 1) return "Choose 1.";
+  if (max === 1) return "Optional: choose at most 1.";
+  if (min > 0 && max > 0) return `Between ${min} y ${max} (you have ${count}).`;
+  if (min > 0) return `At least ${min} (you have ${count}).`;
+  if (max > 0) return `Up to ${max} (you have ${count}).`;
   return undefined;
 }
 
@@ -506,15 +506,15 @@ function DatasheetView({
             key={w}
             header={
               w === "Ranged Weapons"
-                ? "Armas a distancia"
-                : "Armas cuerpo a cuerpo"
+                ? "Ranged weapons"
+                : "Melee weapons"
             }
           >
             <div className="scroll-x">
               <table className="weapons">
                 <thead>
                   <tr>
-                    <th>Arma</th>
+                    <th>Weapon</th>
                     {sheet.profiles[w][0].characteristics
                       .filter((c) => c.name !== "Keywords")
                       .map((c) => (
@@ -558,7 +558,7 @@ function DatasheetView({
         ) : null,
       )}
       {abilities.length > 0 && (
-        <Section header="Habilidades">
+        <Section header="Abilities">
           {abilities.map((a, i) => (
             <button
               className="ability"
@@ -596,7 +596,7 @@ function DatasheetView({
         </Section>
       ))}
       {sheet.keywords.length > 0 && (
-        <Section header="Palabras clave">
+        <Section header="Keywords">
           <div className="keywords kw-list">
             {sheet.keywords.map((k) => (
               <Kw key={k} term={k} index={index} />
@@ -655,7 +655,7 @@ function CollectionCard(props: {
         <button
           className="unit-hero-photo"
           onClick={openItem}
-          aria-label="Ver fotos"
+          aria-label="View photos"
         >
           <img src={url} alt={props.name} />
         </button>
@@ -663,10 +663,10 @@ function CollectionCard(props: {
         <PhotoPicker
           unit={unit}
           className="unit-hero-photo empty"
-          label={`Añadir foto de ${props.name}`}
+          label={`Add photo of ${props.name}`}
         >
           {Icon.camera(34)}
-          <span>Añade una foto de tu miniatura</span>
+          <span>Add a photo of your miniature</span>
         </PhotoPicker>
       )}
       {photoIds.length > 1 && (
@@ -676,7 +676,7 @@ function CollectionCard(props: {
               key={p}
               className={i === shown ? "on" : ""}
               onClick={() => setShown(i)}
-              aria-label={`Foto ${i + 1}`}
+              aria-label={`Photo ${i + 1}`}
             />
           ))}
         </div>
@@ -685,18 +685,18 @@ function CollectionCard(props: {
         <button className="unit-hero-info" onClick={openItem}>
           <b>
             {item
-              ? `Tienes ${item.owned} · ${item.status}`
-              : "No está en tu colección"}
+              ? `You have ${item.owned} · ${paintLabel(item.status)}`
+              : "Not in your collection"}
           </b>
           <span>
             {item
-              ? `${photoIds.length} foto${photoIds.length === 1 ? "" : "s"} · notas y pintura`
-              : "Toca para añadirla"}
+              ? `${photoIds.length} photo${photoIds.length === 1 ? "" : "s"} · notes and paint`
+              : "Tap to add it"}
           </span>
         </button>
         <PhotoPicker unit={unit} className="unit-hero-add">
           {Icon.camera(18)}
-          <span>Foto</span>
+          <span>Photo</span>
         </PhotoPicker>
       </div>
     </div>
@@ -723,12 +723,12 @@ function EnhancementHint({ ev, inst }: { ev: Evaluator; inst: SelInst }) {
   if (enh.some((o) => !o.state.hidden || o.count > 0)) return null;
   const dets = detachments(ev);
   const text = cats.includes("Epic Hero")
-    ? "Los HÉROES ÉPICOS no pueden llevar mejoras."
+    ? "EPIC HEROES can't take enhancements."
     : !dets.length
-      ? "Elige primero un destacamento en la lista: las mejoras dependen de él."
-      : `Ninguna mejora de ${dets.map((d) => d.name).join(" / ")} vale para esta unidad: piden otras claves (p. ej. solo para ciertas miniaturas) o BSData aún no las incluye.`;
+      ? "Choose a detachment in the list first: enhancements depend on it."
+      : `None of the ${dets.map((d) => d.name).join(" / ")} enhancements fit this unit: they need other keywords (e.g. only certain models) or BSData doesn't include them yet.`;
   return (
-    <Section header="Mejoras">
+    <Section header="Enhancements">
       <div className="rule-text">{text}</div>
     </Section>
   );

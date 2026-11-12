@@ -158,17 +158,17 @@ export function coreStratagems(data: WahapediaData | undefined): WStratagem[] {
 }
 
 const TURN: Record<string, string> = {
-  'your turn': 'Tu turno',
-  "opponent's turn": 'Turno del rival',
-  "either player's turn": 'Cualquier turno',
+  'your turn': 'Your turn',
+  "opponent's turn": "Opponent's turn",
+  "either player's turn": "Either player's turn",
 }
 const PHASE: Record<string, string> = {
-  command: 'Fase de mando',
-  movement: 'Fase de movimiento',
-  shooting: 'Fase de disparo',
-  charge: 'Fase de carga',
-  fight: 'Fase de combate',
-  any: 'Cualquier fase',
+  command: 'Command phase',
+  movement: 'Movement phase',
+  shooting: 'Shooting phase',
+  charge: 'Charge phase',
+  fight: 'Fight phase',
+  any: 'Any phase',
 }
 
 export function turnEs(t: string): string {
@@ -181,15 +181,15 @@ export function phaseEs(p: string): string {
     .map((x) => x.trim())
     .filter(Boolean)
     .map((x) => PHASE[x.toLowerCase().replace(/ phase$/, '')] ?? x)
-    .join(' o ')
+    .join(' or ')
 }
 
-/** Tipo de estratagema en español ("Awakened Dynasty – Battle Tactic Stratagem" → "Táctica de batalla") */
+/** Short stratagem type ("Awakened Dynasty – Battle Tactic Stratagem" → "Battle Tactic") */
 export function stratTypeEs(type: string): string {
   const t = type.split(/[–-]\s*/).pop() ?? type
-  if (/battle tactic/i.test(t)) return 'Táctica de batalla'
-  if (/strategic ploy/i.test(t)) return 'Ardid estratégico'
-  if (/epic deed/i.test(t)) return 'Gesta épica'
-  if (/wargear/i.test(t)) return 'Equipo'
+  if (/battle tactic/i.test(t)) return 'Battle Tactic'
+  if (/strategic ploy/i.test(t)) return 'Strategic Ploy'
+  if (/epic deed/i.test(t)) return 'Epic Deed'
+  if (/wargear/i.test(t)) return 'Wargear'
   return t.replace(/\s*stratagem$/i, '')
 }

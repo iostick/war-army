@@ -143,7 +143,7 @@ async function uploadPhotos(userId: string, ids: string[]) {
     const ph = await photos.get(id)
     if (!ph) continue
     const { error } = await supabase.storage.from(BUCKET).upload(`${userId}/${id}.jpg`, ph.blob, { upsert: true, contentType: ph.blob.type || 'image/jpeg' })
-    if (error && !/exists/i.test(error.message)) throw new Error('Fotos: ' + error.message)
+    if (error && !/exists/i.test(error.message)) throw new Error('Photos: ' + error.message)
     done.add(id)
     write(UPLOADED, JSON.stringify([...done]))
   }
@@ -222,7 +222,7 @@ export async function signIn(email: string, password: string) {
 export async function signUp(email: string, password: string): Promise<string> {
   const { data, error } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: location.origin + location.pathname } })
   if (error) throw new Error(traducir(error.message))
-  return data.session ? 'Cuenta creada' : 'Te he enviado un email: confírmalo y luego entra con tu contraseña.'
+  return data.session ? 'Account created' : 'I\'ve sent you an email: confirm it, then sign in with your password.'
 }
 
 export async function signOut() {
@@ -230,10 +230,10 @@ export async function signOut() {
 }
 
 function traducir(m: string): string {
-  if (/invalid login/i.test(m)) return 'Email o contraseña incorrectos'
-  if (/not confirmed/i.test(m)) return 'Confirma primero el email que te envié'
-  if (/already registered/i.test(m)) return 'Ese email ya tiene cuenta: usa «Entrar»'
-  if (/at least/i.test(m)) return 'La contraseña es demasiado corta (mínimo 6 caracteres)'
+  if (/invalid login/i.test(m)) return 'Wrong email or password'
+  if (/not confirmed/i.test(m)) return 'Confirm the email I sent you first'
+  if (/already registered/i.test(m)) return 'That email already has an account: use “Sign in”'
+  if (/at least/i.test(m)) return 'The password is too short (at least 6 characters)'
   return m
 }
 

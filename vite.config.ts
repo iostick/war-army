@@ -48,7 +48,7 @@ export default defineConfig({
       manifest: {
         name: 'War Army',
         short_name: 'War Army',
-        description: 'Listas de ejército, colección y partidas de Warhammer 40.000',
+        description: 'Warhammer 40,000 army lists, collection and games',
         theme_color: '#f2f2f7',
         background_color: '#f2f2f7',
         display: 'standalone',

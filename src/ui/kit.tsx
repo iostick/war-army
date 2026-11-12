@@ -126,8 +126,8 @@ export function Screen(props: { title: string; subtitle?: ReactNode; right?: Rea
         <div className="navbar-inner">
           <div className="navbar-left">
             {nav.depth > 0 && (
-              <button className="bar-button" onClick={nav.pop} aria-label={`Volver a ${props.back ?? "Atrás"}`}>
-                {Icon.chevronLeft()} <span>{props.back ?? 'Atrás'}</span>
+              <button className="bar-button" onClick={nav.pop} aria-label={`Back to ${props.back ?? "Back"}`}>
+                {Icon.chevronLeft()} <span>{props.back ?? 'Back'}</span>
               </button>
             )}
           </div>
@@ -217,13 +217,13 @@ export function Stepper(props: { value: number; min?: number; max?: number; onCh
   const max = props.max ?? Infinity
   return (
     <span className="stepper" onClick={(e) => e.stopPropagation()}>
-      <button disabled={props.value <= min} onClick={() => props.onChange(props.value - 1)} aria-label="Menos">
+      <button disabled={props.value <= min} onClick={() => props.onChange(props.value - 1)} aria-label="Less">
         −
       </button>
       <span className="sep" />
       <span className="value">{props.value}</span>
       <span className="sep" />
-      <button disabled={props.value >= max} onClick={() => props.onChange(props.value + 1)} aria-label="Más">
+      <button disabled={props.value >= max} onClick={() => props.onChange(props.value + 1)} aria-label="More">
         +
       </button>
     </span>
@@ -234,7 +234,7 @@ export function Search(props: { value: string; onChange: (v: string) => void; pl
   return (
     <label className="search">
       {Icon.search()}
-      <input value={props.value} onChange={(e) => props.onChange(e.target.value)} placeholder={props.placeholder ?? 'Buscar'} type="search" />
+      <input value={props.value} onChange={(e) => props.onChange(e.target.value)} placeholder={props.placeholder ?? 'Search'} type="search" />
     </label>
   )
 }
@@ -264,7 +264,7 @@ export function Sheet(props: { title: string; onClose: () => void; left?: ReactN
           <div className="navbar-left">
             {props.left ?? (
               <button className="bar-button" onClick={props.onClose}>
-                Cancelar
+                Cancel
               </button>
             )}
           </div>
