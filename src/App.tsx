@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { exportBackup, importBackup } from './data/backup'
-import { signIn, signOut, signUp, startCloud, syncNow, useCloud } from './data/cloud'
+import { FROM_RECOVERY_LINK, resetPassword, setNewPassword, signIn, signOut, signUp, startCloud, syncNow, useCloud } from './data/cloud'
 import { DataProvider, useData } from './data/dataStatus'
 import { CollectionScreen } from './screens/CollectionScreen'
 import { GamesScreen } from './screens/GameScreen'
@@ -53,7 +53,7 @@ export default function App() {
 
 function Shell({ flash }: { flash: (m: string) => void }) {
   const { ready, progress, error } = useData()
-  const [tab, setTab] = useState<Tab>('lists')
+  const [tab, setTab] = useState<Tab>(FROM_RECOVERY_LINK ? 'settings' : 'lists')
 
   if (!ready) return <FirstDownload progress={progress} error={error} />
 
@@ -205,6 +205,16 @@ function CloudSection({ flash }: { flash: (m: string) => void }) {
     }
   }
   const user = cloud.session?.user
+  if (user && cloud.recovery) {
+    return (
+      <Section header="Choose a new password" footer="You opened the password-reset link. Type the new password you want for this account.">
+        <div className="row">
+          <input className="text-input" type="password" autoComplete="new-password" placeholder="New password" value={password} onChange={(e) => setPassword(e.target.value)} />
+        </div>
+        <Row title={busy ? 'One moment…' : 'Save new password'} className={'action' + (busy || password.length < 6 ? ' disabled' : '')} onClick={() => run(() => setNewPassword(password))} />
+      </Section>
+    )
+  }
   if (user) {
     const last = cloud.lastSync ? new Date(cloud.lastSync).toLocaleString('en-GB', { dateStyle: 'short', timeStyle: 'short' }) : '—'
     return (
@@ -226,6 +236,7 @@ function CloudSection({ flash }: { flash: (m: string) => void }) {
       </div>
       <Row title={busy ? 'One moment…' : 'Sign in'} className={'action' + (busy || !email || !password ? ' disabled' : '')} onClick={() => run(() => signIn(email.trim(), password))} />
       <Row title="Create account" className={'action' + (busy || !email || !password ? ' disabled' : '')} onClick={() => run(() => signUp(email.trim(), password))} />
+      <Row title="Forgot password?" className={'action' + (busy || !email ? ' disabled' : '')} onClick={() => run(() => resetPassword(email.trim()))} />
     </Section>
   )
 }

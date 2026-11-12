@@ -25,6 +25,8 @@ export interface CloudStatus {
   syncing: boolean
   lastSync?: string
   error?: string
+  /** Opened from a password-reset email: ask for a new password */
+  recovery?: boolean
 }
 let status: CloudStatus = { syncing: false, lastSync: read('war-army-last-sync') ?? undefined }
 const listeners = new Set<(s: CloudStatus) => void>()
@@ -225,6 +227,19 @@ export async function signUp(email: string, password: string): Promise<string> {
   return data.session ? 'Account created' : 'I\'ve sent you an email: confirm it, then sign in with your password.'
 }
 
+export async function resetPassword(email: string): Promise<string> {
+  const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: location.origin + location.pathname })
+  if (error) throw new Error(traducir(error.message))
+  return 'Check your email: open the link on this device to choose a new password.'
+}
+
+export async function setNewPassword(password: string): Promise<string> {
+  const { error } = await supabase.auth.updateUser({ password })
+  if (error) throw new Error(traducir(error.message))
+  setStatus({ recovery: false })
+  return 'Password changed'
+}
+
 export async function signOut() {
   await supabase.auth.signOut()
 }
@@ -237,18 +252,21 @@ function traducir(m: string): string {
   return m
 }
 
+// Read before supabase-js clears the URL: opened from a password-reset email
+export const FROM_RECOVERY_LINK = /type=recovery/.test(location.hash + location.search)
+
 /** Arranca la sincronización automática */
 let started = false
 export function startCloud() {
   if (started) return
   started = true
   supabase.auth.getSession().then(({ data }) => {
-    setStatus({ session: data.session })
+    setStatus({ session: data.session, ...(FROM_RECOVERY_LINK && data.session ? { recovery: true } : {}) })
     if (data.session) void syncNow()
   })
   supabase.auth.onAuthStateChange((event, session) => {
-    setStatus({ session })
-    if (event === 'SIGNED_IN') void syncNow()
+    setStatus({ session, ...(event === 'PASSWORD_RECOVERY' ? { recovery: true } : {}) })
+    if (event === 'SIGNED_IN' || event === 'PASSWORD_RECOVERY') void syncNow()
   })
   document.addEventListener('visibilitychange', () => document.visibilityState === 'visible' && void syncNow())
   setInterval(() => document.visibilityState === 'visible' && void syncNow(), 60_000)
