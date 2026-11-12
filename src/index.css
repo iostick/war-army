@@ -2630,3 +2630,309 @@ html {
   background: #fff;
   flex: none;
 }
+
+/* ---------- Meta (tournament stats) ---------- */
+.meta-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.4fr;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.meta-stat {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.meta-stat b {
+  font-family: var(--font-display);
+  font-size: 26px;
+  line-height: 1;
+}
+.meta-stat b.accent {
+  color: var(--accent);
+}
+.meta-stat span {
+  font-size: 12px;
+  color: var(--label-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.chip-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+button.chip {
+  padding: 6px 12px;
+  font-size: 13px;
+  cursor: pointer;
+}
+button.chip.on {
+  background: color-mix(in srgb, var(--tint) 20%, transparent);
+  color: var(--tint);
+}
+.meta-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+.meta-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+  padding: 12px 14px 12px 12px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 22%, var(--bg-elevated)) 0%, var(--bg-elevated) 55%);
+  overflow: hidden;
+  color: var(--label);
+}
+.meta-row::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: var(--accent);
+}
+.meta-row:active {
+  transform: scale(0.99);
+}
+.meta-row.mine {
+  border-color: color-mix(in srgb, var(--accent) 60%, var(--border));
+}
+.meta-rank {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 700;
+  width: 22px;
+  text-align: center;
+  color: var(--label-3);
+  flex: none;
+}
+.meta-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.meta-name {
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  line-height: 1.1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.meta-tag {
+  font-family: system-ui, sans-serif;
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 25%, transparent);
+  color: var(--accent);
+}
+.meta-sub {
+  font-size: 12px;
+  color: var(--label-2);
+}
+.meta-figure {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  flex: none;
+  min-width: 58px;
+}
+.meta-figure b {
+  font-family: var(--font-display);
+  font-size: 24px;
+  line-height: 1;
+}
+.meta-figure small {
+  font-size: 10px;
+  color: var(--label-3);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.wr-up {
+  color: var(--green);
+}
+.wr-down {
+  color: var(--red);
+}
+.wr-even,
+.wr-none {
+  color: var(--label);
+}
+.wr-bar {
+  position: relative;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--fill);
+  margin-top: 4px;
+  overflow: hidden;
+}
+.wr-fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: 3px;
+  background: currentColor;
+}
+.wr-fill.wr-even {
+  color: var(--label-3);
+}
+.wr-mid {
+  position: absolute;
+  left: 50%;
+  top: -2px;
+  bottom: -2px;
+  width: 1px;
+  background: var(--label-3);
+}
+.meta-wr {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 700;
+}
+.meta-det-row {
+  align-items: center;
+}
+.field-bar {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--fill);
+  margin: 6px 0 3px;
+  overflow: hidden;
+}
+.field-bar span {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+  background: var(--accent);
+}
+.meta-date {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 38px;
+  flex: none;
+  line-height: 1;
+}
+.meta-date b {
+  font-family: var(--font-display);
+  font-size: 22px;
+}
+.meta-date small {
+  font-size: 10px;
+  text-transform: uppercase;
+  color: var(--label-2);
+  letter-spacing: 0.06em;
+}
+.meta-winner {
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.record {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 700;
+  min-width: 52px;
+  text-align: center;
+  padding: 4px 6px;
+  border-radius: 10px;
+  background: var(--fill);
+  flex: none;
+}
+.record.perfect {
+  background: color-mix(in srgb, var(--green) 20%, transparent);
+  color: var(--green);
+}
+.meta-list-row {
+  align-items: flex-start;
+}
+.meta-list-row .record {
+  margin-top: 2px;
+}
+.meta-hero {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: #fff;
+  border-radius: 22px;
+  padding: 18px 18px 16px;
+  margin: 8px 0 20px;
+  background: linear-gradient(135deg, var(--accent) 0%, color-mix(in srgb, var(--accent) 55%, #05060a) 55%, color-mix(in srgb, var(--accent) 22%, #05060a) 100%);
+  box-shadow: 0 10px 30px color-mix(in srgb, var(--accent) 25%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+.meta-hero .roster-name {
+  font-size: 30px;
+}
+.meta-hero-wr {
+  position: absolute;
+  right: 18px;
+  top: 14px;
+  font-family: var(--font-display);
+  font-size: 40px;
+  font-weight: 700;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+.meta-hero:has(.meta-hero-wr) .roster-name {
+  padding-right: 100px;
+}
+.meta-hero-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 10px;
+}
+.meta-hero-stat {
+  background: rgba(0, 0, 0, 0.22);
+  border-radius: 12px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+}
+.meta-hero-stat b {
+  font-family: var(--font-display);
+  font-size: 22px;
+  line-height: 1;
+}
+.meta-hero-stat span {
+  font-size: 11px;
+  opacity: 0.8;
+}
+.meta-hero-winner {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+}
+@media (max-width: 380px) {
+  .tab {
+    font-size: 10px;
+    letter-spacing: 0.02em;
+  }
+}

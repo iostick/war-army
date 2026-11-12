@@ -55,6 +55,12 @@ export const Icon = {
       <circle cx="12" cy="12" r="1.2" fill="currentColor" />
     </svg>
   ),
+  trophy: (s = 26) => (
+    <svg width={s} height={s} viewBox="0 0 24 24" {...P} strokeWidth={1.8}>
+      <path d="M7.5 4h9v5a4.5 4.5 0 0 1-9 0z" />
+      <path d="M7.5 6H4.5a3 3 0 0 0 3 4M16.5 6h3a3 3 0 0 1-3 4M12 13.5V17M8.5 20.5h7M9.5 17h5v3.5h-5z" />
+    </svg>
+  ),
   gear: (s = 26) => (
     <svg width={s} height={s} viewBox="0 0 24 24" {...P} strokeWidth={1.8}>
       <circle cx="12" cy="12" r="3.2" />

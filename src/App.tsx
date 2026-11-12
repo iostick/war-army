@@ -4,18 +4,20 @@ import { FROM_RECOVERY_LINK, resetPassword, setNewPassword, signIn, signOut, sig
 import { DataProvider, useData } from './data/dataStatus'
 import { CollectionScreen } from './screens/CollectionScreen'
 import { GamesScreen } from './screens/GameScreen'
+import { MetaScreen } from './screens/MetaScreen'
 import { RostersScreen } from './screens/RostersScreen'
 import { RulesScreen } from './screens/RulesScreen'
 import { GlossaryProvider } from './ui/glossaryUi'
 import { Icon, Row, Screen, Section, Spinner } from './ui/kit'
 import { NavStack } from './ui/nav'
 
-type Tab = 'lists' | 'collection' | 'game' | 'rules' | 'settings'
+type Tab = 'lists' | 'collection' | 'game' | 'meta' | 'rules' | 'settings'
 
 const TABS: { id: Tab; label: string; icon: () => ReactNode }[] = [
   { id: 'lists', label: 'Lists', icon: () => Icon.list(24) },
   { id: 'collection', label: 'Collection', icon: () => Icon.box(24) },
   { id: 'game', label: 'Games', icon: () => Icon.dice(24) },
+  { id: 'meta', label: 'Meta', icon: () => Icon.trophy(24) },
   { id: 'rules', label: 'Rules', icon: () => Icon.shield(24) },
   { id: 'settings', label: 'Settings', icon: () => Icon.gear(24) },
 ]
@@ -94,6 +96,8 @@ function TabRoot({ tab, flash }: { tab: Tab; flash: (m: string) => void }) {
       return <CollectionScreen />
     case 'game':
       return <GamesScreen />
+    case 'meta':
+      return <MetaScreen />
     case 'rules':
       return <RulesScreen />
     case 'settings':
