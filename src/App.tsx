@@ -1,33 +1,55 @@
-import { useCallback, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
+import { exportBackup, importBackup } from './data/backup'
 import { DataProvider, useData } from './data/dataStatus'
+import { CollectionScreen } from './screens/CollectionScreen'
+import { GamesScreen } from './screens/GameScreen'
 import { RostersScreen } from './screens/RostersScreen'
+import { RulesScreen } from './screens/RulesScreen'
+import { GlossaryProvider } from './ui/glossaryUi'
 import { Icon, Row, Screen, Section, Spinner } from './ui/kit'
 import { NavStack } from './ui/nav'
 
-type Tab = 'lists' | 'collection' | 'game' | 'settings'
+type Tab = 'lists' | 'collection' | 'game' | 'rules' | 'settings'
 
 const TABS: { id: Tab; label: string; icon: () => ReactNode }[] = [
-  { id: 'lists', label: 'Listas', icon: () => Icon.list() },
-  { id: 'collection', label: 'Colección', icon: () => Icon.box() },
-  { id: 'game', label: 'Partida', icon: () => Icon.dice() },
-  { id: 'settings', label: 'Ajustes', icon: () => Icon.gear() },
+  { id: 'lists', label: 'Listas', icon: () => Icon.list(24) },
+  { id: 'collection', label: 'Colección', icon: () => Icon.box(24) },
+  { id: 'game', label: 'Partidas', icon: () => Icon.dice(24) },
+  { id: 'rules', label: 'Reglas', icon: () => Icon.shield(24) },
+  { id: 'settings', label: 'Ajustes', icon: () => Icon.gear(24) },
 ]
+
+type Theme = 'system' | 'light' | 'dark'
+function applyTheme(t: Theme) {
+  if (t === 'system') delete document.documentElement.dataset.theme
+  else document.documentElement.dataset.theme = t
+}
+function loadTheme(): Theme {
+  try {
+    return (localStorage.getItem('theme') as Theme) || 'system'
+  } catch {
+    return 'system'
+  }
+}
 
 export default function App() {
   const [toast, setToast] = useState<string>()
-  const onUpdated = useCallback((m: string) => {
+  const flash = useCallback((m: string) => {
     setToast(m)
     setTimeout(() => setToast(undefined), 2500)
   }, [])
+  useEffect(() => applyTheme(loadTheme()), [])
   return (
-    <DataProvider onUpdated={onUpdated}>
-      <Shell />
+    <DataProvider onUpdated={flash}>
+      <GlossaryProvider>
+        <Shell flash={flash} />
+      </GlossaryProvider>
       {toast && <div className="toast">{toast}</div>}
     </DataProvider>
   )
 }
 
-function Shell() {
+function Shell({ flash }: { flash: (m: string) => void }) {
   const { ready, progress, error } = useData()
   const [tab, setTab] = useState<Tab>('lists')
 
@@ -44,10 +66,9 @@ function Shell() {
         ))}
       </nav>
       <main className="main">
-        {/* Cada pestaña conserva su propia pila de navegación */}
         {TABS.map((t) => (
           <div key={t.id} className="stack" style={{ display: tab === t.id ? 'block' : 'none' }}>
-            <NavStack root={() => <TabRoot tab={t.id} />} />
+            <NavStack root={() => <TabRoot tab={t.id} flash={flash} />} />
           </div>
         ))}
       </main>
@@ -63,41 +84,49 @@ function Shell() {
   )
 }
 
-function TabRoot({ tab }: { tab: Tab }) {
+function TabRoot({ tab, flash }: { tab: Tab; flash: (m: string) => void }) {
   switch (tab) {
     case 'lists':
       return <RostersScreen />
     case 'collection':
-      return (
-        <Screen title="Colección">
-          <div className="empty">
-            <div className="big-icon">{Icon.box(56)}</div>
-            <h2>Próximamente</h2>
-            <p>Aquí marcarás qué unidades tienes, con una foto por unidad y su estado de pintura, sincronizado entre tus dispositivos.</p>
-          </div>
-        </Screen>
-      )
+      return <CollectionScreen />
     case 'game':
-      return (
-        <Screen title="Partida">
-          <div className="empty">
-            <div className="big-icon">{Icon.dice(56)}</div>
-            <h2>Próximamente</h2>
-            <p>Seguimiento de partidas: rondas, CP, VP y objetivos. Y exportación a Tabletop Simulator.</p>
-          </div>
-        </Screen>
-      )
+      return <GamesScreen />
+    case 'rules':
+      return <RulesScreen />
     case 'settings':
-      return <SettingsScreen />
+      return <SettingsScreen flash={flash} />
   }
 }
 
-function SettingsScreen() {
+function SettingsScreen({ flash }: { flash: (m: string) => void }) {
   const { meta, syncing, progress, error, lastResult, checkNow } = useData()
+  const [theme, setTheme] = useState<Theme>(loadTheme())
+  const file = useRef<HTMLInputElement>(null)
   const date = meta?.commitDate ? new Date(meta.commitDate).toLocaleString('es-ES', { dateStyle: 'medium', timeStyle: 'short' }) : '—'
   const checked = meta?.checkedAt ? new Date(meta.checkedAt).toLocaleString('es-ES', { dateStyle: 'medium', timeStyle: 'short' }) : '—'
+  const pickTheme = (t: Theme) => {
+    setTheme(t)
+    applyTheme(t)
+    try {
+      localStorage.setItem('theme', t)
+    } catch {
+      /* sin almacenamiento */
+    }
+  }
   return (
     <Screen title="Ajustes">
+      <Section header="Apariencia">
+        {(
+          [
+            ['system', 'Automático (como el dispositivo)'],
+            ['light', 'Claro'],
+            ['dark', 'Oscuro'],
+          ] as [Theme, string][]
+        ).map(([t, l]) => (
+          <Row key={t} title={l} checked={theme === t} onClick={() => pickTheme(t)} />
+        ))}
+      </Section>
       <Section header="Datos de juego" footer={error ? `Error: ${error}` : lastResult}>
         <Row title="Fuente" detail="BSData · wh40k-11e" />
         <Row title="Versión" detail={meta?.commitSha ? meta.commitSha.slice(0, 7) : '—'} />
@@ -106,13 +135,51 @@ function SettingsScreen() {
         <Row
           title={syncing ? (progress?.phase === 'downloading' ? `Descargando ${progress.done}/${progress.total}…` : 'Comprobando…') : 'Buscar actualizaciones'}
           className="action"
-          icon={Icon.refresh(17)}
+          icon={Icon.refresh(16)}
           iconBg="var(--green)"
           onClick={syncing ? undefined : checkNow}
         />
       </Section>
-      <Section footer="Los datos los mantiene la comunidad de BSData y no están avalados por Games Workshop.">
-        <Row title="War Army" detail="Uso personal" />
+      <Section header="Copia de seguridad" footer="Guarda listas, colección con fotos y partidas en un archivo. Ábrelo en otro dispositivo (AirDrop, iCloud Drive) con «Importar» para tener lo mismo.">
+        <Row
+          title="Exportar copia"
+          className="action"
+          icon={Icon.share(16)}
+          onClick={async () => {
+            const blob = await exportBackup()
+            const name = `war-army-${new Date().toISOString().slice(0, 10)}.json`
+            const f = new File([blob], name, { type: 'application/json' })
+            try {
+              if (navigator.canShare?.({ files: [f] })) return await navigator.share({ files: [f], title: 'War Army' })
+            } catch {
+              return
+            }
+            const a = document.createElement('a')
+            a.href = URL.createObjectURL(blob)
+            a.download = name
+            a.click()
+          }}
+        />
+        <Row title="Importar copia" className="action" icon={Icon.copy(16)} onClick={() => file.current?.click()} />
+        <input
+          ref={file}
+          type="file"
+          accept="application/json,.json"
+          hidden
+          onChange={async (e) => {
+            const f = e.target.files?.[0]
+            if (!f) return
+            try {
+              flash(await importBackup(f))
+            } catch (err) {
+              flash((err as Error).message)
+            }
+            e.target.value = ''
+          }}
+        />
+      </Section>
+      <Section footer="Los datos los mantiene la comunidad de BSData y no están avalados por Games Workshop. App de uso personal.">
+        <Row title="War Army" detail="11ª edición" />
       </Section>
     </Screen>
   )

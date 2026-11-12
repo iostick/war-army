@@ -3,7 +3,7 @@ import { join } from 'node:path'
 import { beforeAll, describe, expect, it } from 'vitest'
 import { DataIndex } from './catalog'
 import { Evaluator, flattenOptions } from './evaluate'
-import { addSelection, createRoster, PTS, setNumber } from './ops'
+import { addSelection, attach, createRoster, PTS, setNumber } from './ops'
 import type { Roster } from './roster'
 
 const DATA = process.env.BSDATA_DIR ?? ''
@@ -121,4 +121,41 @@ describe.skipIf(!DATA)('motor BSData (11ª edición)', () => {
     }
     expect(problems).toEqual([])
   }, 300_000)
+
+  it('11ª: límites de unidades, Epic Heroes, etiquetas de destacamento y Warlord', () => {
+    let r = createRoster(index, 'Prueba', necrons, 2000)
+    const det = findSel(r, 'Detachment')
+    r = addByName(r, det.sel.uid, 'Awakened Dynasty').roster
+    r = addByName(r, findSel(r, 'Detachment').sel.uid, 'Hand of the Dynasty').roster
+    for (const u of ['Imotekh the Stormlord', 'Imotekh the Stormlord', 'Lychguard', 'Lychguard', 'Lychguard', 'Lychguard']) r = addByName(r, r.forces[0].uid, u).roster
+    for (let i = 0; i < 6; i++) r = addByName(r, r.forces[0].uid, 'Necron Warriors').roster
+    const msgs = new Evaluator(index, r).validate().map((i) => i.message)
+    expect(msgs.some((m) => /Imotekh.*máximo 1/.test(m))).toBe(true)
+    expect(msgs.some((m) => /Lychguard.*máximo 3/.test(m))).toBe(true)
+    expect(msgs.some((m) => /Necron Warriors.*máximo/.test(m))).toBe(false) // Battleline: hasta 6
+    expect(msgs.some((m) => /etiqueta «Dynasty»/.test(m))).toBe(true)
+    expect(msgs.some((m) => /Detachment Points/.test(m))).toBe(true) // 3 + 1 > 3
+    expect(msgs.some((m) => /Warlord/.test(m))).toBe(true)
+  })
+
+  it('11ª: líderes y apoyos se adjuntan a unidades válidas', () => {
+    let r = createRoster(index, 'Prueba', necrons, 2000)
+    for (const u of ['Overlord', 'Technomancer', 'Necron Warriors', 'Lokhust Heavy Destroyers']) r = addByName(r, r.forces[0].uid, u).roster
+    let ev = new Evaluator(index, r)
+    const ov = findSel(r, 'Overlord')
+    const tm = findSel(r, 'Technomancer')
+    const nw = findSel(r, 'Necron Warriors')
+    expect(ev.validate().some((i) => /Technomancer debe apoyar/.test(i.message))).toBe(true)
+    const tmDef = ev.associationDefs(tm)[0]
+    expect(ev.associationCandidates(tm, tmDef).map((c) => c.node.name)).toEqual(['Necron Warriors'])
+    r = attach(r, ov.sel.uid, ev.associationDefs(ov)[0].id, nw.sel.uid)
+    r = attach(r, tm.sel.uid, tmDef.id, nw.sel.uid)
+    ev = new Evaluator(index, r)
+    expect(ev.leadersOf(ev.findInst(nw.sel.uid) as any).map((l) => l.node.name)).toEqual(['Overlord', 'Technomancer'])
+    expect(ev.validate().some((i) => /apoyar|unirse/.test(i.message))).toBe(false)
+    // Un Overlord no puede liderar Lokhust Heavy Destroyers
+    const lhd = findSel(r, 'Lokhust Heavy Destroyers')
+    r = attach(r, ov.sel.uid, ev.associationDefs(ov)[0].id, lhd.sel.uid)
+    expect(new Evaluator(index, r).validate().some((i) => /Overlord no puede unirse/.test(i.message))).toBe(true)
+  })
 })

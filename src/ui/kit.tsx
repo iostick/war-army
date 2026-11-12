@@ -188,9 +188,16 @@ export function Row(props: {
   const style = props.icon ? ({ '--inset': '57px' } as React.CSSProperties) : props.checked !== undefined ? ({ '--inset': '50px' } as React.CSSProperties) : undefined
   if (props.onClick)
     return (
-      <button className={'row ' + (props.className ?? '')} onClick={props.onClick} style={style}>
+      <div
+        role="button"
+        tabIndex={0}
+        className={'row pressable ' + (props.className ?? '')}
+        onClick={props.onClick}
+        onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), props.onClick!())}
+        style={style}
+      >
         {inner}
-      </button>
+      </div>
     )
   return (
     <div className={'row ' + (props.className ?? '')} style={style}>

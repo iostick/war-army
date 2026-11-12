@@ -13,6 +13,8 @@ export interface Selection {
   /** Cantidad por cada instancia del padre */
   number: number
   children: Selection[]
+  /** Unidades a las que se adjunta (líder o apoyo): id de la definición de asociación y uid de la unidad */
+  associations?: { id: string; target: string }[]
 }
 
 export interface Force {

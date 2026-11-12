@@ -72,8 +72,20 @@ export function addSelection(index: DataIndex, roster: Roster, parentUid: string
   return { roster: touch(fillDefaults(index, next, sel.uid)), uid: sel.uid }
 }
 
+/** Adjunta un líder/apoyo a una unidad (o lo separa si target es undefined) */
+export function attach(roster: Roster, leaderUid: string, assocId: string, target: string | undefined): Roster {
+  const next = structuredClone(roster)
+  const sel = findContainer(next, leaderUid)
+  if (!sel || isForce(sel)) return roster
+  const others = (sel.associations ?? []).filter((a) => a.id !== assocId)
+  sel.associations = target ? [...others, { id: assocId, target }] : others
+  return touch(next)
+}
+
 export function removeSelection(roster: Roster, selUid: string): Roster {
   const next = structuredClone(roster)
+  // Quitar adjuntos que apuntaban a la unidad eliminada
+  for (const f of next.forces) for (const s of f.selections) if (s.associations) s.associations = s.associations.filter((a) => a.target !== selUid)
   const parent = findParent(next, selUid)
   if (!parent) return roster
   if (isForce(parent)) parent.selections = parent.selections.filter((s) => s.uid !== selUid)
@@ -102,6 +114,7 @@ export function duplicateSelection(roster: Roster, selUid: string): Roster {
     s.children.forEach(reuid)
   }
   reuid(copy)
+  delete copy.associations
   const list = isForce(parent) ? parent.selections : parent.children
   list.splice(list.indexOf(sel) + 1, 0, copy)
   return touch(next)

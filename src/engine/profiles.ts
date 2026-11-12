@@ -16,7 +16,7 @@ export interface Datasheet {
   keywords: string[]
 }
 
-function profilesOf(index: DataIndex, src: Raw | undefined): Raw[] {
+export function profilesOf(index: DataIndex, src: Raw | undefined): Raw[] {
   if (!src) return []
   const out: Raw[] = [...(src.profiles ?? [])]
   for (const l of src.infoLinks ?? []) {
@@ -30,19 +30,27 @@ function profilesOf(index: DataIndex, src: Raw | undefined): Raw[] {
   return out
 }
 
-function rulesOf(index: DataIndex, src: Raw | undefined): Raw[] {
+export function rulesOf(index: DataIndex, src: Raw | undefined, isHidden: (link: Raw) => boolean = (l) => Boolean(l.hidden)): Raw[] {
   if (!src) return []
-  const out: Raw[] = [...(src.rules ?? [])]
+  const out: Raw[] = [...(src.rules ?? []).filter((r: Raw) => !isHidden(r))]
   for (const l of src.infoLinks ?? []) {
+    if (isHidden(l)) continue
     if (l.type === 'rule') {
       const t = index.byId.get(l.targetId)
-      if (t && !l.hidden) out.push({ ...t, name: l.name ?? t.name })
+      if (t) out.push({ ...t, name: nameWithMods(l, t) })
     } else if (l.type === 'infoGroup') {
       const t = index.byId.get(l.targetId)
-      if (t) out.push(...rulesOf(index, t))
+      if (t) out.push(...rulesOf(index, t, isHidden))
     }
   }
   return out
+}
+
+/** Nombre de la regla con sus añadidos (p. ej. "Feel No Pain" + "5+") */
+function nameWithMods(link: Raw, target: Raw): string {
+  let name: string = link.name ?? target.name
+  for (const m of link.modifiers ?? []) if (m.field === 'name' && m.type === 'append' && !m.conditions && !m.conditionGroups) name = `${name} ${m.value}`
+  return name
 }
 
 export function datasheet(index: DataIndex, ev: Evaluator, unit: SelInst): Datasheet {
@@ -60,7 +68,8 @@ export function datasheet(index: DataIndex, ev: Evaluator, unit: SelInst): Datas
   const visit = (s: SelInst, mult: number) => {
     if (ev.stateOf(s).hidden) return
     for (const p of [...profilesOf(index, s.node.target), ...profilesOf(index, s.node.link)]) add(p, mult)
-    for (const r of [...rulesOf(index, s.node.target), ...rulesOf(index, s.node.link)]) {
+    const hidden = (l: Raw) => ev.infoHidden(l, s)
+    for (const r of [...rulesOf(index, s.node.target, hidden), ...rulesOf(index, s.node.link, hidden)]) {
       if (!rules.has(r.name)) rules.set(r.name, r.description ?? '')
     }
     for (const c of s.children) visit(c, mult * c.sel.number)

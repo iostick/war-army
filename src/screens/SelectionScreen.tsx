@@ -3,10 +3,18 @@ import { useMemo } from 'react'
 import { useRoster } from '../data/session'
 import type { EntryNode } from '../engine/catalog'
 import type { Evaluator, OptionInfo, SelInst } from '../engine/evaluate'
-import { addSelection, duplicateSelection, PTS, removeSelection, setNumber } from '../engine/ops'
+import { addSelection, attach, duplicateSelection, PTS, removeSelection, setNumber } from '../engine/ops'
 import { datasheet } from '../engine/profiles'
+import { splitKeywords } from '../data/glossary'
+import { collection, PAINT_STATUS } from '../data/db'
+import { usePhotoUrl } from '../data/photos'
+import { useTable } from '../data/useTable'
+import type { DataIndex } from '../engine/catalog'
+import { factionColor } from '../ui/faction'
+import { Kw, RichText, useTerm } from '../ui/glossaryUi'
 import { Icon, pts, Row, Screen, Section, Spinner, Stepper } from '../ui/kit'
 import { useNav } from '../ui/nav'
+import { CollectionItemScreen } from './CollectionScreen'
 
 export function SelectionScreen(props: { rosterUid: string; selUid: string; back?: string }) {
   const { ev, index, update } = useRoster(props.rosterUid)
@@ -37,6 +45,9 @@ export function SelectionScreen(props: { rosterUid: string; selUid: string; back
   const total = ev.selectionTotal(inst, PTS)
   const isRoot = inst.parent.kind === 'force'
   const issues = ev.validate().filter((i) => i.targetUid && (i.targetUid === inst.sel.uid || isDescendant(inst, i.targetUid)))
+  const assocDefs = isRoot ? ev.associationDefs(inst) : []
+  const leaders = isRoot ? ev.leadersOf(inst) : []
+  const accent = factionColor(index.catalogues.get(inst.force.force.catalogueId)?.name)
 
   const toggle = (o: OptionInfo, radioGroup?: EntryNode) => {
     update((r, idx) => {
@@ -64,7 +75,47 @@ export function SelectionScreen(props: { rosterUid: string; selUid: string; back
     nav.push({ key: 'sel:' + s.sel.uid, render: () => <SelectionScreen rosterUid={props.rosterUid} selUid={s.sel.uid} back={state.name} /> })
 
   return (
+    <div style={{ '--accent': accent } as React.CSSProperties}>
     <Screen title={state.name} back={props.back ?? 'Lista'} subtitle={total ? pts(total) : undefined}>
+      {isRoot && inst.node.type !== 'upgrade' && <CollectionCard index={index} catalogueId={inst.force.force.catalogueId} entryId={inst.node.id} name={inst.node.name} rosterUid={props.rosterUid} />}
+
+      {assocDefs.map((d) => {
+        const current = (inst.sel.associations ?? []).find((a) => a.id === d.id)?.target
+        const cands = ev.associationCandidates(inst, d)
+        const isSupport = /support/i.test(d.name ?? '')
+        return (
+          <Section
+            key={d.id}
+            header={isSupport ? 'Apoya a (Support)' : 'Lidera a (Leader)'}
+            footer={isSupport ? 'Una unidad de apoyo debe unirse a una de estas unidades.' : 'Opcional. Cada unidad admite un líder y un apoyo.'}
+          >
+            {!isSupport && <Row title="Sin unir" checked={!current} onClick={() => update((r) => attach(r, inst.sel.uid, d.id, undefined))} />}
+            {cands.map((c) => {
+              const taken = ev.leadersOf(c).filter((l) => l !== inst && ev.associationDefs(l).some((x) => /support/i.test(x.name ?? '') === isSupport))
+              return (
+                <Row
+                  key={c.sel.uid}
+                  title={ev.stateOf(c).name}
+                  sub={taken.length ? `Ya lleva ${taken.map((t) => ev.stateOf(t).name).join(', ')}` : undefined}
+                  detail={pts(ev.selectionTotal(c, PTS))}
+                  checked={current === c.sel.uid}
+                  onClick={() => update((r) => attach(r, inst.sel.uid, d.id, current === c.sel.uid ? undefined : c.sel.uid))}
+                />
+              )
+            })}
+            {!cands.length && <Row title="No hay unidades válidas en la lista" sub="Añade una de las unidades que puede liderar." />}
+          </Section>
+        )
+      })}
+
+      {leaders.length > 0 && (
+        <Section header="Unidad adjunta">
+          {leaders.map((l) => (
+            <Row key={l.sel.uid} title={ev.stateOf(l).name} detail={pts(ev.selectionTotal(l, PTS))} chevron onClick={() => openChild(l)} />
+          ))}
+        </Section>
+      )}
+
       {issues.length > 0 && (
         <Section>
           {issues.map((i, n) => (
@@ -121,7 +172,7 @@ export function SelectionScreen(props: { rosterUid: string; selUid: string; back
         </Section>
       ))}
 
-      {sheet && <DatasheetView sheet={sheet} />}
+      {sheet && <DatasheetView sheet={sheet} index={index} />}
 
       {isRoot && inst.node.type !== 'upgrade' && (
         <Section>
@@ -139,6 +190,7 @@ export function SelectionScreen(props: { rosterUid: string; selUid: string; back
         </Section>
       )}
     </Screen>
+    </div>
   )
 }
 
@@ -210,7 +262,8 @@ function isDescendant(inst: SelInst, uid: string): boolean {
   return false
 }
 
-function DatasheetView({ sheet }: { sheet: ReturnType<typeof datasheet> }) {
+function DatasheetView({ sheet, index }: { sheet: ReturnType<typeof datasheet>; index: DataIndex }) {
+  const { show } = useTerm()
   const unitProfiles = sheet.profiles['Unit'] ?? []
   const weapons = ['Ranged Weapons', 'Melee Weapons']
   const others = Object.keys(sheet.profiles).filter((k) => k !== 'Unit' && !weapons.includes(k) && k !== 'Abilities')
@@ -261,7 +314,11 @@ function DatasheetView({ sheet }: { sheet: ReturnType<typeof datasheet> }) {
                       rows.push(
                         <tr key={p.name + ':kw'}>
                           <td className="kw" colSpan={p.characteristics.length}>
-                            {kw}
+                            <span className="kw-list">
+                              {splitKeywords(kw).map((k) => (
+                                <Kw key={k} term={k} index={index} />
+                              ))}
+                            </span>
                           </td>
                         </tr>,
                       )
@@ -276,10 +333,10 @@ function DatasheetView({ sheet }: { sheet: ReturnType<typeof datasheet> }) {
       {abilities.length > 0 && (
         <Section header="Habilidades">
           {abilities.map((a, i) => (
-            <div className="ability" key={a.name + i}>
+            <button className="ability" key={a.name + i} style={{ display: 'block', width: '100%', textAlign: 'left' }} onClick={() => show(a.name, index, { name: a.name, description: a.description })}>
               <b>{a.name}</b>
-              {a.description}
-            </div>
+              <RichText text={a.description.length > 240 ? a.description.slice(0, 240) + '…' : a.description} />
+            </button>
           ))}
         </Section>
       )}
@@ -295,9 +352,48 @@ function DatasheetView({ sheet }: { sheet: ReturnType<typeof datasheet> }) {
       ))}
       {sheet.keywords.length > 0 && (
         <Section header="Palabras clave">
-          <div className="keywords">{sheet.keywords.join(', ')}</div>
+          <div className="keywords kw-list">
+            {sheet.keywords.map((k) => (
+              <Kw key={k} term={k} index={index} />
+            ))}
+          </div>
         </Section>
       )}
     </>
+  )
+}
+
+function CollectionCard(props: { index: DataIndex; catalogueId: string; entryId: string; name: string; rosterUid: string }) {
+  const nav = useNav()
+  const key = `${props.catalogueId}:${props.entryId}`
+  const item = useTable('collection', () => collection.get(key), [key])
+  const url = usePhotoUrl(item?.photos[0])
+  const faction = props.index.catalogues.get(props.catalogueId)?.name ?? ''
+  return (
+    <Section header="Mi colección">
+      <Row
+        title={item ? `Tienes ${item.owned} · ${item.status}` : 'No está en tu colección'}
+        sub={item ? `${item.photos.length} foto${item.photos.length === 1 ? '' : 's'}` : 'Añádela para llevar fotos y estado de pintura'}
+        leading={url ? <img className="thumb" src={url} alt="" /> : undefined}
+        chevron
+        onClick={async () => {
+          if (!item) {
+            await collection.put({
+              key,
+              catalogueId: props.catalogueId,
+              entryId: props.entryId,
+              name: props.name,
+              faction,
+              owned: 1,
+              status: PAINT_STATUS[0],
+              notes: '',
+              photos: [],
+              updatedAt: new Date().toISOString(),
+            })
+          }
+          nav.push({ key: 'col:' + key, render: () => <CollectionItemScreen itemKey={key} /> })
+        }}
+      />
+    </Section>
   )
 }

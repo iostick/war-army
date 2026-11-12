@@ -1,6 +1,7 @@
 // Evaluador de reglas: aplica modificadores y condiciones de BSData, calcula costes y valida límites.
 import type { DataIndex, EntryNode, Raw } from './catalog'
 import type { Force, Roster, Selection } from './roster'
+import { validateCore } from './rules11'
 
 export interface RosterInst {
   kind: 'roster'
@@ -160,6 +161,66 @@ export class Evaluator {
     return out
   }
 
+  // ---------- Unidades adjuntas (líderes y apoyos) ----------
+
+  /** Unidad (selección raíz) a la que pertenece una selección */
+  rootOf(inst: SelInst): SelInst {
+    let cur = inst
+    while (cur.parent.kind === 'sel') cur = cur.parent
+    return cur
+  }
+
+  private attachIndex?: { bodyguardOf: Map<SelInst, SelInst>; leadersOf: Map<SelInst, SelInst[]> }
+
+  private attachments() {
+    if (this.attachIndex) return this.attachIndex
+    const bodyguardOf = new Map<SelInst, SelInst>()
+    const leadersOf = new Map<SelInst, SelInst[]>()
+    for (const f of this.allForces()) {
+      for (const s of f.selections) {
+        for (const a of s.sel.associations ?? []) {
+          const target = f.selections.find((t) => t.sel.uid === a.target)
+          if (!target || target === s) continue
+          bodyguardOf.set(s, target)
+          if (!leadersOf.has(target)) leadersOf.set(target, [])
+          leadersOf.get(target)!.push(s)
+        }
+      }
+    }
+    this.attachIndex = { bodyguardOf, leadersOf }
+    return this.attachIndex
+  }
+
+  /** Unidad a la que está adjunto un líder */
+  bodyguardOf(inst: SelInst): SelInst | undefined {
+    return this.attachments().bodyguardOf.get(inst)
+  }
+
+  /** Líderes y apoyos adjuntos a una unidad */
+  leadersOf(inst: SelInst): SelInst[] {
+    return this.attachments().leadersOf.get(inst) ?? []
+  }
+
+  /** La unidad adjunta completa: guardaespaldas + todos sus líderes */
+  attachedGroup(root: SelInst): SelInst[] {
+    const bg = this.bodyguardOf(root) ?? root
+    return [bg, ...this.leadersOf(bg)]
+  }
+
+  /** Definiciones de asociación de una entrada (p. ej. "Leader", "Supported by") */
+  associationDefs(inst: SelInst): Raw[] {
+    return [...(inst.node.target.associations ?? []), ...(inst.node.link?.associations ?? [])]
+  }
+
+  /** Unidades a las que se puede adjuntar un líder según una definición */
+  associationCandidates(inst: SelInst, def: Raw): SelInst[] {
+    return inst.force.selections.filter((cand) => {
+      if (cand === inst || cand.node.type === 'upgrade') return false
+      if (def.childId && def.childId !== 'unit' && !this.matches(cand, def.childId)) return false
+      return this.conditionsPass(def, { self: cand })
+    })
+  }
+
   // ---------- Recorridos ----------
 
   findInst(uid: string): SelInst | ForceInst | undefined {
@@ -289,7 +350,12 @@ export class Evaluator {
     const childId: string | undefined = q.childId
     const deep = Boolean(q.includeChildSelections)
     const childForces = Boolean(q.includeChildForces)
-    if (field === 'associations') return 0
+    if (field === 'associations') {
+      // Unidades adjuntas (líderes y apoyos) a esta unidad, o la unidad a la que se adjunta
+      if (scope.kind !== 'sel') return 0
+      const root = this.rootOf(scope)
+      return this.attachedGroup(root).filter((o) => o !== root && this.matches(o, childId)).length
+    }
     if (field === 'forces') {
       const forces = scope.kind === 'roster' ? [...this.allForces()] : scope.kind === 'force' ? [...this.allForces(scope.forces)] : []
       return forces.filter((f) => this.instanceOf(f, childId ?? 'any') || childId === 'any' || !childId).length
@@ -301,9 +367,13 @@ export class Evaluator {
     }
     // Campo = tipo de coste
     let total = 0
-    if (scope.kind === 'sel' && (!childId || childId === 'any')) total += this.ownCost(scope)[field] ?? 0
-    for (const [s, m] of this.selectionsIn(scope, true, childForces)) {
-      if (this.matches(s, childId)) total += (this.ownCost(s)[field] ?? 0) * m
+    // traverseAssociationGroup: la unidad adjunta completa (guardaespaldas + líderes) cuenta como una
+    const scopes: Inst[] = q.traverseAssociationGroup && scope.kind === 'sel' && scope.parent.kind === 'force' ? this.attachedGroup(scope) : [scope]
+    for (const sc of scopes) {
+      if (sc.kind === 'sel' && (!childId || childId === 'any')) total += this.ownCost(sc)[field] ?? 0
+      for (const [s, m] of this.selectionsIn(sc, true, childForces)) {
+        if (this.matches(s, childId)) total += (this.ownCost(s)[field] ?? 0) * m
+      }
     }
     return total
   }
@@ -496,6 +566,13 @@ export class Evaluator {
     return this.computeState(inst.node, { self: inst }, 's:' + inst.sel.uid)
   }
 
+  /** ¿Está oculto un enlace de información (regla/perfil) de una selección, según sus modificadores? */
+  infoHidden(link: Raw, inst: SelInst): boolean {
+    if (!link.modifiers?.length && !link.modifierGroups?.length) return Boolean(link.hidden)
+    const node = { key: link.id, id: link.id, kind: 'entry', name: link.name ?? '', hidden: Boolean(link.hidden), collective: false, sortIndex: 0, constraints: [], modifiers: link.modifiers ?? [], modifierGroups: link.modifierGroups ?? [], costs: [], categoryIds: [], target: link, catalogueId: '' } as EntryNode
+    return this.computeState(node, { self: inst }, `i:${inst.sel.uid}:${link.id}`).hidden
+  }
+
   /** Estado de una entrada aún no seleccionada dentro de un contenedor */
   optionState(node: EntryNode, groups: EntryNode[], parent: SelInst | ForceInst): EffectiveState {
     const v: VirtualInst = { kind: 'virtual', node, groups, parent, mult: 0 }
@@ -619,7 +696,9 @@ export class Evaluator {
       }
       this.validateContainer(f, push)
       for (const s of descendants(f.selections)) this.validateContainer(s, push)
+      for (const s of f.selections) this.validateAssociations(s, push)
     }
+    for (const i of validateCore(this)) push(i, 'core:' + i.message)
     return issues
   }
 
@@ -668,12 +747,36 @@ export class Evaluator {
     )
   }
 
+  private validateAssociations(s: SelInst, push: (i: Issue, key: string) => void) {
+    const defs = this.associationDefs(s)
+    const bg = this.bodyguardOf(s)
+    const name = this.stateOf(s).name
+    for (const a of s.sel.associations ?? []) {
+      const target = s.force.selections.find((t) => t.sel.uid === a.target)
+      if (!target) {
+        push({ severity: 'error', message: `${name}: la unidad a la que estaba adjunto ya no está en la lista`, targetUid: s.sel.uid }, 'as-miss:' + s.sel.uid)
+        continue
+      }
+      const def = defs.find((d) => d.id === a.id)
+      if (!def || !this.associationCandidates(s, def).includes(target)) {
+        push({ severity: 'error', message: `${name} no puede unirse a ${this.stateOf(target).name}`, targetUid: s.sel.uid }, 'as-bad:' + s.sel.uid)
+      }
+    }
+    for (const d of defs) {
+      const n = (s.sel.associations ?? []).filter((a) => a.id === d.id).length
+      const min = Number(d.min ?? 0)
+      if (n < min && !bg) {
+        const what = /support/i.test(d.name ?? '') ? 'debe apoyar a una unidad' : 'debe unirse a una unidad'
+        push({ severity: 'error', message: `${name} ${what}`, targetUid: s.sel.uid }, `as-min:${s.sel.uid}:${d.id}`)
+      }
+    }
+  }
+
   private checkConstraint(c: Raw, value: number, ctx: Ctx, name: string, targetUid: string, push: (i: Issue, key: string) => void) {
     if (c.type === 'max' && value < 0) return
     const scope = this.resolveScope(c.scope ?? 'parent', ctx)
     if (!scope) return
     const field = c.field ?? 'selections'
-    if (field === 'associations') return
     const q = field === 'selections' && !c.childId ? { ...c, childId: ctx.self.kind === 'sel' || ctx.self.kind === 'virtual' ? ctx.self.node.id : undefined } : c
     const n = this.measure(scope, q)
     const scopeKey = scope.kind === 'roster' ? 'roster' : scope.kind === 'force' ? scope.force.uid : scope.kind === 'sel' ? scope.sel.uid : 'v'
