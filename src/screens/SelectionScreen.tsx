@@ -1,5 +1,5 @@
 // Editor de una unidad (o de una opción con sub-opciones): opciones, cantidades, mejoras y ficha.
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useRoster } from "../data/session";
 import type { EntryNode } from "../engine/catalog";
 import type { Evaluator, OptionInfo, SelInst } from "../engine/evaluate";
@@ -235,10 +235,15 @@ export function SelectionScreen(props: {
       <Screen
         title={state.name}
         back={props.back ?? "List"}
-        subtitle={total ? pts(total) : undefined}
+        subtitle={
+          total && !(isRoot && inst.node.type !== "upgrade")
+            ? pts(total)
+            : undefined
+        }
       >
         {isRoot && inst.node.type !== "upgrade" && (
           <CollectionCard
+            points={total}
             index={index}
             catalogueId={inst.force.force.catalogueId}
             entryId={inst.node.id}
@@ -428,7 +433,7 @@ function limitsText(
 ): string | undefined {
   if (max === 1 && min === 1) return "Choose 1.";
   if (max === 1) return "Optional: choose at most 1.";
-  if (min > 0 && max > 0) return `Between ${min} y ${max} (you have ${count}).`;
+  if (min > 0 && max > 0) return `Between ${min} and ${max} (you have ${count}).`;
   if (min > 0) return `At least ${min} (you have ${count}).`;
   if (max > 0) return `Up to ${max} (you have ${count}).`;
   return undefined;
@@ -614,14 +619,13 @@ function CollectionCard(props: {
   entryId: string;
   name: string;
   rosterUid: string;
+  points: number;
 }) {
   const nav = useNav();
   const key = `${props.catalogueId}:${props.entryId}`;
   const item = useTable("collection", () => collection.get(key), [key]);
-  const [shown, setShown] = useState(0);
   const photoIds = item?.photos ?? [];
-  const current = photoIds[Math.min(shown, photoIds.length - 1)];
-  const url = usePhotoUrl(current);
+  const url = usePhotoUrl(photoIds[0]);
   const faction = props.index.catalogues.get(props.catalogueId)?.name ?? "";
   const unit = {
     catalogueId: props.catalogueId,
@@ -649,56 +653,36 @@ function CollectionCard(props: {
       render: () => <CollectionItemScreen itemKey={key} />,
     });
   };
+  const meta = [
+    props.points ? pts(props.points) : "",
+    item
+      ? `You have ${item.owned} · ${paintLabel(item.status)}`
+      : "Not in your collection",
+  ]
+    .filter(Boolean)
+    .join(" · ");
   return (
-    <div className="unit-hero">
-      {url ? (
-        <button
-          className="unit-hero-photo"
-          onClick={openItem}
-          aria-label="View photos"
-        >
-          <img src={url} alt={props.name} />
-        </button>
-      ) : (
-        <PhotoPicker
-          unit={unit}
-          className="unit-hero-photo empty"
-          label={`Add photo of ${props.name}`}
-        >
-          {Icon.camera(34)}
-          <span>Add a photo of your miniature</span>
-        </PhotoPicker>
-      )}
-      {photoIds.length > 1 && (
-        <div className="unit-hero-dots">
-          {photoIds.map((p, i) => (
-            <button
-              key={p}
-              className={i === shown ? "on" : ""}
-              onClick={() => setShown(i)}
-              aria-label={`Photo ${i + 1}`}
-            />
-          ))}
-        </div>
-      )}
-      <div className="unit-hero-bar">
-        <button className="unit-hero-info" onClick={openItem}>
-          <b>
-            {item
-              ? `You have ${item.owned} · ${paintLabel(item.status)}`
-              : "Not in your collection"}
-          </b>
-          <span>
-            {item
-              ? `${photoIds.length} photo${photoIds.length === 1 ? "" : "s"} · notes and paint`
-              : "Tap to add it"}
-          </span>
-        </button>
-        <PhotoPicker unit={unit} className="unit-hero-add">
-          {Icon.camera(18)}
-          <span>Photo</span>
-        </PhotoPicker>
-      </div>
+    <div className={"unit-banner" + (url ? " has-photo" : "")}>
+      {url && <img className="unit-banner-img" src={url} alt="" />}
+      <button
+        className="unit-banner-body"
+        onClick={openItem}
+        aria-label={url ? "View photos" : "Collection"}
+      >
+        <span className="unit-banner-name">{props.name}</span>
+        <span className="unit-banner-meta">{meta}</span>
+        {photoIds.length > 1 && (
+          <span className="unit-banner-meta">{photoIds.length} photos</span>
+        )}
+      </button>
+      <PhotoPicker
+        unit={unit}
+        className="unit-banner-add"
+        label={`Add photo of ${props.name}`}
+      >
+        {Icon.camera(18)}
+        <span>{url ? "Photo" : "Add photo"}</span>
+      </PhotoPicker>
     </div>
   );
 }

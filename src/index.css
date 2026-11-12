@@ -2033,3 +2033,193 @@ html {
   font-size: 12px;
   padding: 0 6px;
 }
+
+/* ---------- Unit photos: faded into the list row and behind the unit header ---------- */
+.unit-row {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.unit-row.has-photo {
+  min-height: 66px;
+}
+
+.unit-bg {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 62%;
+  height: 100%;
+  object-fit: cover;
+  z-index: -1;
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, rgba(0, 0, 0, 0.35) 35%, #000 100%);
+  mask-image: linear-gradient(to right, transparent 0%, rgba(0, 0, 0, 0.35) 35%, #000 100%);
+  opacity: 0.85;
+}
+
+.unit-row.has-photo .row-detail,
+.unit-row.has-photo .row-title,
+.unit-row.has-photo .chevron {
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+
+.unit-row.has-photo .row-detail {
+  color: #fff;
+  font-weight: 600;
+}
+
+.unit-row.has-photo .chevron {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.unit-row .unit-thumb.empty-thumb {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+}
+
+.unit-banner {
+  position: relative;
+  margin: -14px -16px 18px;
+  min-height: 120px;
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  padding: 16px;
+  overflow: hidden;
+  isolation: isolate;
+  background: radial-gradient(90% 120% at 100% 0%, color-mix(in srgb, var(--accent) 35%, transparent), transparent 70%);
+}
+
+.unit-banner.has-photo {
+  min-height: 210px;
+}
+
+.unit-banner-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: -1;
+  -webkit-mask-image: linear-gradient(to bottom, #000 30%, rgba(0, 0, 0, 0.5) 65%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 30%, rgba(0, 0, 0, 0.5) 65%, transparent 100%);
+}
+
+.unit-banner-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  gap: 2px;
+  color: var(--label);
+}
+
+.unit-banner-name {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.05;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.unit-banner-meta {
+  font-size: 13px;
+  color: var(--label-2);
+}
+
+.unit-banner.has-photo .unit-banner-name,
+.unit-banner.has-photo .unit-banner-meta {
+  color: #fff;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.9);
+}
+
+.unit-banner-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  flex: none;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+}
+
+.unit-banner.has-photo .unit-banner-add {
+  background: rgba(0, 0, 0, 0.45);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+/* ---------- Rulebook ---------- */
+.rule-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 34px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--tint);
+  background: color-mix(in srgb, var(--tint) 14%, transparent);
+  flex: none;
+}
+
+.rule-num.big {
+  min-width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  font-size: 17px;
+}
+
+.rule-sub {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 16px 0 6px;
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--label);
+}
+
+.rule-sub .rule-num {
+  font-size: 11px;
+}
+
+.rule-note {
+  margin: 12px 0 4px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--tint) 8%, var(--fill));
+  border: 1px solid color-mix(in srgb, var(--tint) 25%, transparent);
+  padding: 8px 12px;
+}
+
+.rule-note summary {
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--tint);
+}
+
+.rule-note[open] summary {
+  margin-bottom: 6px;
+}

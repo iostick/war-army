@@ -257,15 +257,15 @@ function UnitRow(props: { title: string; sub: string; detail: string; photo?: st
       sub={props.missing ? <span style={{ color: 'var(--orange)' }}>{props.sub}</span> : props.sub}
       leading={
         url ? (
-          <img className="unit-thumb" src={url} alt="" />
+          <img className="unit-bg" src={url} alt="" />
         ) : (
           <PhotoPicker unit={props.unit} className="unit-thumb empty-thumb">
-            {Icon.camera(18)}
+            {Icon.camera(16)}
           </PhotoPicker>
         )
       }
       detail={props.detail}
-      className={'unit-row' + (props.indent ? ' indent' : '')}
+      className={'unit-row' + (url ? ' has-photo' : '') + (props.indent ? ' indent' : '')}
       chevron
       onClick={props.onClick}
     />
