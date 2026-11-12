@@ -1,6 +1,6 @@
 // Missions hub (Warhammer Event, 11th edition): disposition matrix, mission decks and deployments.
 import { useState } from 'react'
-import { DISPOSITIONS, MATRIX, findCard, useMissionCards, type CardKind, type Disposition, type MissionCard } from '../data/missions'
+import { DISPOSITIONS, LAYOUT_LETTERS, MATRIX, findCard, layoutUrl, useLayoutsAvailable, useMissionCards, type CardKind, type Disposition, type LayoutLetter, type MissionCard } from '../data/missions'
 import { Row, Screen, Section, Sheet, Spinner } from '../ui/kit'
 import { useNav } from '../ui/nav'
 import { RulebookScreen } from './RulebookScreen'
@@ -29,7 +29,7 @@ export function MissionsScreen({ back }: { back?: string }) {
 }
 
 /** Pick both dispositions and see each player's primary mission */
-export function MatchupPicker({ me: me0, them: them0, onChange }: { me?: Disposition; them?: Disposition; onChange?: (me?: Disposition, them?: Disposition) => void }) {
+export function MatchupPicker({ me: me0, them: them0, onChange, showLayouts = true }: { me?: Disposition; them?: Disposition; onChange?: (me?: Disposition, them?: Disposition) => void; showLayouts?: boolean }) {
   const [me, setMe] = useState<Disposition | undefined>(me0)
   const [them, setThem] = useState<Disposition | undefined>(them0)
   const [open, setOpen] = useState<string>()
@@ -71,6 +71,14 @@ export function MatchupPicker({ me: me0, them: them0, onChange }: { me?: Disposi
             <b>{MATRIX[them][me]}</b>
           </button>
         </div>
+      )}
+      {me && them && showLayouts && (
+        <>
+          <div className="section-header">
+            <span>Terrain layouts</span>
+          </div>
+          <LayoutPicker me={me} them={them} />
+        </>
       )}
       {open && <CardSheet kind="primary" name={open} onClose={() => setOpen(undefined)} />}
     </>
@@ -205,5 +213,55 @@ export function MissionCardView({ kind, name, card }: { kind: CardKind; name: st
         !card?.image && <div className="mission-card-body muted-text">The card text isn't downloaded yet. It's fetched from Wahapedia when the app is published; reopen the app while online.</div>
       )}
     </div>
+  )
+}
+
+/** The three official terrain layouts for a pairing */
+export function LayoutPicker({ me, them, value, onChange }: { me: Disposition; them: Disposition; value?: LayoutLetter; onChange?: (l: LayoutLetter) => void }) {
+  const ok = useLayoutsAvailable()
+  const [view, setView] = useState<LayoutLetter>()
+  if (ok === false)
+    return <div className="section-footer">The terrain layouts aren't downloaded yet: they're taken from the official Event Companion PDF when the app is published.</div>
+  if (!ok) return null
+  return (
+    <>
+      <div className="layout-grid">
+        {LAYOUT_LETTERS.map((l) => (
+          <button key={l} className={'layout-tile' + (value === l ? ' on' : '')} onClick={() => (onChange ? onChange(l) : setView(l))}>
+            <img src={layoutUrl(me, them, l)} alt="" loading="lazy" />
+            <span>Layout {l}</span>
+          </button>
+        ))}
+      </div>
+      {onChange && value && (
+        <button className="link-button" onClick={() => setView(value)}>
+          View layout {value} full size
+        </button>
+      )}
+      {view && <LayoutSheet me={me} them={them} letter={view} onClose={() => setView(undefined)} />}
+    </>
+  )
+}
+
+export function LayoutSheet({ me, them, letter, onClose }: { me: Disposition; them: Disposition; letter: LayoutLetter; onClose: () => void }) {
+  const [zoom, setZoom] = useState(false)
+  return (
+    <Sheet
+      title={`Layout ${letter}`}
+      onClose={onClose}
+      left={<span />}
+      right={
+        <button className="bar-button bold" onClick={onClose}>
+          Close
+        </button>
+      }
+    >
+      <div className="section-footer" style={{ marginTop: 0 }}>
+        {me} vs {them} · tap the map to zoom
+      </div>
+      <div className={'layout-view' + (zoom ? ' zoom' : '')} onClick={() => setZoom(!zoom)}>
+        <img src={layoutUrl(me, them, letter)} alt={`Layout ${letter}`} />
+      </div>
+    </Sheet>
   )
 }

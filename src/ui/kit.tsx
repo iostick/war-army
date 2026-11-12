@@ -1,5 +1,6 @@
 // Componentes de interfaz con estilo iOS.
 import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import { useNav } from './nav'
 
 // ---------- Iconos (trazos al estilo SF Symbols) ----------
@@ -262,8 +263,15 @@ export function Sheet(props: { title: string; onClose: () => void; left?: ReactN
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [props])
-  return (
-    <div className="sheet-backdrop" onClick={props.onClose}>
+  // Rendered on <body> so the floating tab bar and scroll containers never cover it (iOS stacking)
+  return createPortal(
+    <div
+      className="sheet-backdrop"
+      onClick={(e) => {
+        e.stopPropagation()
+        props.onClose()
+      }}
+    >
       <div className="sheet" onClick={(e) => e.stopPropagation()} role="dialog" aria-label={props.title}>
         <div className="sheet-header">
           <div className="navbar-left">
@@ -278,7 +286,8 @@ export function Sheet(props: { title: string; onClose: () => void; left?: ReactN
         </div>
         <div className="sheet-body">{props.children}</div>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
 

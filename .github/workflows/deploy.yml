@@ -47,6 +47,24 @@ jobs:
           ls -la public/wahapedia
           wc -l public/wahapedia/*.csv || true
           head -c 300 public/wahapedia/Stratagems.csv || true
+      - name: Terrain layouts from the official Warhammer Event Companion (free PDF)
+        run: |
+          # 15 Force Disposition pairings x layouts A/B/C on pages 9-53, rendered to images
+          mkdir -p public/layouts /tmp/ec
+          if ! command -v pdftoppm > /dev/null; then
+            (sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils) > /dev/null 2>&1 || echo "::warning::poppler-utils not installed"
+          fi
+          if command -v pdftoppm > /dev/null && curl -fsSL --retry 3 --retry-delay 5 -o /tmp/ec/ec.pdf \
+            "https://assets.warhammer-community.com/eng_12-06_warhammer40000_event_companion-s3bfb5f9s1-ivswuij3fo.pdf"; then
+            pdftoppm -f 9 -l 53 -jpeg -jpegopt quality=78 -scale-to 1400 /tmp/ec/ec.pdf /tmp/ec/p
+            i=0
+            for f in $(ls /tmp/ec/p-*.jpg | sort -V); do
+              cp "$f" "public/layouts/$i.jpg"; i=$((i+1))
+            done
+            echo "Layouts: $i images"; du -sh public/layouts
+          else
+            echo "::warning::Could not download the Event Companion PDF (terrain layouts)"
+          fi
       - run: npm run build
       - uses: actions/upload-pages-artifact@v3
         with:

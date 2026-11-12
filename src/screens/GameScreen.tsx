@@ -6,8 +6,8 @@ import { useTable } from '../data/useTable'
 import { uid } from '../engine/roster'
 import { CORE_STRATAGEMS } from '../data/coreRules'
 import { Icon, Row, Screen, Section, Segmented, Sheet, Spinner, Stepper } from '../ui/kit'
-import { MATRIX, asDisposition, useMissionCards, type CardKind, type Disposition } from '../data/missions'
-import { CardSheet, MatchupPicker, MissionsScreen } from './MissionsScreen'
+import { MATRIX, asDisposition, layoutUrl, useLayoutsAvailable, useMissionCards, type CardKind, type Disposition, type LayoutLetter } from '../data/missions'
+import { CardSheet, LayoutPicker, LayoutSheet, MatchupPicker, MissionsScreen } from './MissionsScreen'
 import { useNav } from '../ui/nav'
 import { RosterScreen } from './RosterScreen'
 import { RulebookScreen } from './RulebookScreen'
@@ -86,7 +86,9 @@ function NewGameSheet({ onClose, onCreated }: { onClose: () => void; onCreated: 
   const [me, setMe] = useState<Disposition>()
   const [them, setThem] = useState<Disposition>()
   const [deployment, setDeployment] = useState('')
+  const [layout, setLayout] = useState<LayoutLetter>()
   const [attacker, setAttacker] = useState<0 | 1>(0)
+  const layoutsOk = useLayoutsAvailable()
   const deployments = (cards ?? []).filter((c) => c.kind === 'deployment')
   const create = async () => {
     const r = rosters?.find((x) => x.uid === roster)
@@ -109,6 +111,7 @@ function NewGameSheet({ onClose, onCreated }: { onClose: () => void; onCreated: 
       myDisposition: me,
       oppDisposition: them,
       deployment: deployment || undefined,
+      layout,
       attacker,
       rounds: emptyRounds(),
       secondaries: [[], []],
@@ -144,11 +147,20 @@ function NewGameSheet({ onClose, onCreated }: { onClose: () => void; onCreated: 
       <MatchupPicker
         me={me}
         them={them}
+        showLayouts={false}
         onChange={(a, b) => {
           setMe(a)
           setThem(b)
         }}
       />
+      {me && them && (
+        <>
+          <div className="section-header">
+            <span>Terrain layout</span>
+          </div>
+          <LayoutPicker me={me} them={them} value={layout} onChange={setLayout} />
+        </>
+      )}
       <div className="section-header">
         <span>Attacker</span>
       </div>
@@ -162,7 +174,7 @@ function NewGameSheet({ onClose, onCreated }: { onClose: () => void; onCreated: 
           onChange={setAttacker}
         />
       </div>
-      {deployments.length > 0 && (
+      {deployments.length > 0 && layoutsOk === false && (
         <Section header="Deployment">
           <Row title="Not chosen" checked={!deployment} onClick={() => setDeployment('')} />
           {deployments.map((d) => (
@@ -184,6 +196,7 @@ export function GameScreen({ id }: { id: string }) {
   const [card, setCard] = useState<{ kind: CardKind; name: string }>()
   const [picking, setPicking] = useState(false)
   const [addSec, setAddSec] = useState<0 | 1>()
+  const [layoutView, setLayoutView] = useState(false)
   if (!g) return <Screen title="">{null}</Screen>
   const save = (patch: Partial<Game>) => games.put({ ...g, ...patch, updatedAt: new Date().toISOString() })
   const setPair = (key: 'cp' | 'vp', i: 0 | 1, v: number) => {
@@ -306,6 +319,7 @@ export function GameScreen({ id }: { id: string }) {
         ) : (
           <Row title={g.mission || 'No mission set'} sub="Pick both Force Dispositions to get the primary missions" chevron onClick={() => setPicking(true)} />
         )}
+        {me && them && g.layout && <Row leading={<img className="layout-thumb" src={layoutUrl(me, them, g.layout as LayoutLetter)} alt="" />} title={`Layout ${g.layout}`} sub="Terrain layout" chevron onClick={() => setLayoutView(true)} />}
         {g.deployment && <Row title={g.deployment} sub="Deployment" chevron onClick={() => setCard({ kind: 'deployment', name: g.deployment! })} />}
         {myPrimary && <Row title="Change dispositions" className="action" onClick={() => setPicking(true)} />}
       </Section>
@@ -324,9 +338,11 @@ export function GameScreen({ id }: { id: string }) {
         {g.rosterUid && <Row title="View my list" icon={Icon.shield(16)} chevron onClick={() => nav.push({ key: 'roster:' + g.rosterUid, render: () => <RosterScreen uid={g.rosterUid!} /> })} />}
       </Section>
       {card && <CardSheet kind={card.kind} name={card.name} onClose={() => setCard(undefined)} />}
+      {layoutView && me && them && g.layout && <LayoutSheet me={me} them={them} letter={g.layout as LayoutLetter} onClose={() => setLayoutView(false)} />}
       {picking && (
         <Sheet title="Force Dispositions" onClose={() => setPicking(false)} left={<span />} right={<button className="bar-button bold" onClick={() => setPicking(false)}>Done</button>}>
-          <MatchupPicker me={me} them={them} onChange={(a, b) => save({ myDisposition: a, oppDisposition: b, mission: a && b ? MATRIX[a][b] : g.mission })} />
+          <MatchupPicker me={me} them={them} showLayouts={false} onChange={(a, b) => save({ myDisposition: a, oppDisposition: b, mission: a && b ? MATRIX[a][b] : g.mission })} />
+          {me && them && <LayoutPicker me={me} them={them} value={g.layout as LayoutLetter | undefined} onChange={(l) => save({ layout: l })} />}
         </Sheet>
       )}
       {addSec !== undefined && <SecondaryPicker taken={sec[addSec]} onClose={() => setAddSec(undefined)} onPick={(n) => (setSec(addSec, [...sec[addSec], n]), setAddSec(undefined))} />}

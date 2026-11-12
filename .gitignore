@@ -25,3 +25,4 @@ dist-ssr
 
 # Datos de Wahapedia: se descargan al publicar, no se guardan en el repositorio
 public/wahapedia/
+public/layouts/

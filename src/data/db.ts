@@ -119,6 +119,8 @@ export interface Game {
   myDisposition?: string
   oppDisposition?: string
   deployment?: string
+  /** Official terrain layout for the pairing: A, B or C */
+  layout?: string
   /** 0 = I'm the attacker, 1 = opponent */
   attacker?: 0 | 1
   /** VP per battle round: [my primary, my secondary, their primary, their secondary] */

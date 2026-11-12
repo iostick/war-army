@@ -173,3 +173,35 @@ export function useMissionCards(): { loading: boolean; cards?: MissionCard[] } {
 }
 
 export const findCard = (cards: MissionCard[] | undefined, kind: CardKind, name?: string) => (name ? cards?.find((c) => c.kind === kind && norm(c.name) === norm(name)) : undefined)
+
+// ---------- Terrain layouts (official Event Companion: 3 layouts per disposition pairing) ----------
+export const LAYOUT_LETTERS = ['A', 'B', 'C'] as const
+export type LayoutLetter = (typeof LAYOUT_LETTERS)[number]
+
+/** Index of an unordered pairing, in the order the Event Companion prints them (TaH–TaH, TaH–PtF … PA–PA) */
+export function pairIndex(a: Disposition, b: Disposition): number {
+  let i = DISPOSITIONS.indexOf(a)
+  let j = DISPOSITIONS.indexOf(b)
+  if (i > j) [i, j] = [j, i]
+  let k = 0
+  for (let r = 0; r < i; r++) k += DISPOSITIONS.length - r
+  return k + (j - i)
+}
+
+export const layoutUrl = (a: Disposition, b: Disposition, letter: LayoutLetter) => `./layouts/${pairIndex(a, b) * 3 + LAYOUT_LETTERS.indexOf(letter)}.jpg`
+
+let layoutsProbe: Promise<boolean> | undefined
+export function useLayoutsAvailable(): boolean | undefined {
+  const [ok, set] = useState<boolean>()
+  useEffect(() => {
+    layoutsProbe ??= fetch('./layouts/0.jpg', { method: 'HEAD' })
+      .then((r) => r.ok && (r.headers.get('content-type') ?? '').startsWith('image/'))
+      .catch(() => false)
+    let alive = true
+    layoutsProbe.then((v) => alive && set(v))
+    return () => {
+      alive = false
+    }
+  }, [])
+  return ok
+}
